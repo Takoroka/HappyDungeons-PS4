@@ -23,6 +23,9 @@ server-side services. No game files, firmware or user data are included; you nee
 
 ## Playing
 
+**Step-by-step guide for players: [PLAYING.md](PLAYING.md)** (download, account on the portal, shadPS4 settings,
+co-op). In short:
+
 1. Copy the `HappyDungeons` patch folder (from the patch pack) into shadPS4's `patches` folder
    (Windows `%APPDATA%\shadPS4\patches`, Linux `~/.local/share/shadPS4/patches`,
    macOS `~/Library/Application Support/shadPS4/patches`).
