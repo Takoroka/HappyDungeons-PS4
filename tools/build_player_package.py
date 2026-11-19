@@ -90,7 +90,8 @@ def clean_config(server, vblank):
         cfg["Audio"][key] = "Default Device"
     cfg["Input"]["default_controller_id"] = ""
     cfg["Network"].update(connected_to_network=True, shad_net_enabled=True, shadnet_server=server["shadnet"],
-                          shadnet_webapi_server=server["webapi"], p2p_port=3658, signaling_info="")
+                          shadnet_webapi_server=server["webapi"], p2p_port=3658, signaling_info="",
+                          enable_upnp=True)   # opens the co-op UDP port on the router (most routers); off = no co-op without a manual forward
     return json.dumps(cfg, indent=4) + "\n"
 
 

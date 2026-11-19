@@ -243,8 +243,17 @@ $cfg = Set-JsonValue $cfg 'shad_net_enabled' 'true'
 $cfg = Set-JsonValue $cfg 'shadnet_server' (ConvertTo-JsonString $Server.shadnet)
 $cfg = Set-JsonValue $cfg 'shadnet_webapi_server' (ConvertTo-JsonString $Server.webapi)
 $cfg = Set-JsonValue $cfg 'p2p_port' ([string]$port)
+$cfg = Set-JsonValue $cfg 'enable_upnp' 'true'   # lets the router open the co-op port by itself (if it supports UPnP)
 Write-Text $cfgPath $cfg
 Write-Text $SettingsPath ($settings | ConvertTo-Json)
+# shadPS4 makes these user folders on its first start and, while making home\1000, always asks a "Save Migration"
+# question (copy / move / do nothing), even when there is nothing to move. Made here, the first start goes straight
+# to the game.
+foreach ($id in 1000..1003) {
+    foreach ($sub in 'savedata', 'trophy', 'inputs') {
+        New-Item -ItemType Directory -Force -Path (Join-Path $UserDir "home\$id\$sub") | Out-Null
+    }
+}
 
 Write-Host ''
 Write-Host 'Done. Start the game with "Play Happy Dungeons.bat" (or the 120/240 fps one).' -ForegroundColor Cyan
