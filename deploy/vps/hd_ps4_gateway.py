@@ -445,6 +445,14 @@ def proxy_client(client, peer):
     except (ConnectionError, OSError):
         pass
     finally:
+        # shutdown() first: on Linux, close() alone does not end a TCP connection that the other thread is still
+        # blocked reading (server_to_client), so shadNet never saw the player leave and refused their next sign-in
+        # with "already logged in" (error 6). shutdown sends the FIN and wakes that reader.
+        for s in (client, upstream):
+            try:
+                s.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
         for s in (client, upstream):
             try:
                 s.close()
