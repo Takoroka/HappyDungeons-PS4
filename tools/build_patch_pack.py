@@ -3,11 +3,12 @@
   py -3 -I build_patch_pack.py [--server vps|local]
 
 The pack is one folder, HappyDungeons, that goes into shadPS4's patches folder:
-  HappyDungeons.xml       server redirect (Toylogic hosts -> the friends server, or 127.0.0.1:5100 for --server local),
-                          empty-cloud-slot save fix, NAT check, select() fix (from the player package's patch file)
-  HappyDungeons_fps.xml   frame-rate decoupling + shared online tick (tools/make_fps_patch.py), 30 fps cap lifted
-  HappyDungeons_saves.xml optional (off by default): keep saves on this PC instead of the server, when built
-  files.json              maps the files to CUSA09120 (how shadPS4 finds patches for a game)
+  HappyDungeons.xml       ALL the patches in one file (shadPS4 applies only one file per patch folder):
+                          server redirect (Toylogic hosts -> the friends server, or 127.0.0.1:5100 for --server local),
+                          empty-cloud-slot save fix, NAT check, select() fix (from the player package's patch file);
+                          frame-rate decoupling + shared online tick, 30 fps cap lifted (tools/make_fps_patch.py);
+                          optional, off by default: keep saves on this PC (tools/make_localsave_patch.py), when built
+  files.json              maps HappyDungeons.xml to CUSA09120 (how shadPS4 finds patches for a game)
 plus INSTALL.txt (dist-src/patch-pack/INSTALL.txt) and happydungeons_account.py (gets a player's shadNet login
 from the server, any OS; the same as the gateway's /ps4/account page). Output: dist/HappyDungeons-patches[-local]/ and a zip next to it.
 The patches only change the game in memory while it runs; shadPS4 itself is not modified (any build with shadNet,
@@ -44,23 +45,35 @@ def main():
         shutil.rmtree(out)
     pack = os.path.join(out, "HappyDungeons")
     os.makedirs(pack)
-    files = {"HappyDungeons.xml": s["xml"], "HappyDungeons_fps.xml": FPS_XML}
+    # ONE patch file: shadPS4 applies only the first file in a patch folder whose files.json entry lists the game
+    # (common/memory_patcher.cpp: "break;" after the first match), so the fps and saves patches must be in the same
+    # file as the server redirect, or they are silently skipped (the launcher still lists and ticks them).
+    sources = [s["xml"], FPS_XML]
     saves_note = ""
     if os.path.exists(SAVES_XML):
-        files["HappyDungeons_saves.xml"] = SAVES_XML
+        sources.append(SAVES_XML)
         saves_note = (
-            "  HappyDungeons/HappyDungeons_saves.xml    OPTIONAL, off by default: keep your saves on this PC instead of\n"
-            "                                           the server (tick it in Cheats / Patches). Your character is then\n"
-            "                                           no longer shared with the PC version or other computers, and the\n"
-            "                                           server does not keep it. The save files are hds_*.bin / .bak in\n"
-            "                                           the shadPS4 folder > download > CUSA09120; copy them to back up.\n")
-    for name, src in files.items():
+            "  (in HappyDungeons.xml)                   OPTIONAL, off by default: \"Saves: keep them on this PC\" keeps\n"
+            "                                           your saves on this PC instead of the server (tick it in Cheats /\n"
+            "                                           Patches). Your character is then no longer shared with the PC\n"
+            "                                           version or other computers, and the server does not keep it.\n"
+            "                                           The save files are hds_*.bin / .bak in the shadPS4 folder >\n"
+            "                                           download > CUSA09120; copy them to back up.\n")
+    head, blocks = None, []
+    for src in sources:
         data = open(src, encoding="utf-8").read()
         assert "CUSA09120" in data and 'AppVer="01.11"' in data, src
-        with open(os.path.join(pack, name), "w", encoding="utf-8", newline="\n") as f:
-            f.write(data)
+        start, end = data.index("</TitleID>") + len("</TitleID>"), data.rindex("</Patch>")
+        if head is None:
+            head = data[:start]
+        blocks.append(data[start:end].strip("\n"))
+    merged = head + "\n" + "\n".join(blocks) + "\n</Patch>\n"
+    assert merged.count("<Metadata") == sum(open(p, encoding="utf-8").read().count("<Metadata") for p in sources)
+    files = {"HappyDungeons.xml": merged}
+    with open(os.path.join(pack, "HappyDungeons.xml"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(merged)
     with open(os.path.join(pack, "files.json"), "w", encoding="utf-8", newline="\n") as f:
-        json.dump({name: ["CUSA09120"] for name in files}, f)
+        json.dump({"HappyDungeons.xml": ["CUSA09120"]}, f)
     fill = {"__SHADNET__": s["shadnet"], "__WEBAPI__": s["webapi"], "__LINK_API__": s["link"],
             "__ACCOUNT_PAGE__": s["link"] + "/ps4/account", "__SAVES__": saves_note}
 

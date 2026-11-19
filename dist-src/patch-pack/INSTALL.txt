@@ -25,7 +25,10 @@ The "shadPS4 folder" below is:
 1. PATCHES
    Copy the folder "HappyDungeons" from this pack into the "patches" folder in the shadPS4 folder.
    In the launcher, right-click Happy Dungeons > Cheats / Patches > Patches: they are listed there. Leave them
-   ticked (except HappyDungeons_saves, which is optional and off, see FILES).
+   ticked (except "Saves: keep them on this PC", which is optional and off, see FILES).
+   Updating from an older pack that had HappyDungeons_fps.xml / HappyDungeons_saves.xml in that folder: delete
+   the folder first. shadPS4 uses only ONE patch file per folder, so those extra files were never applied (the
+   game ran too fast at higher frame rates).
 
 2. YOUR HAPPY DUNGEONS LOGIN
    Happy Dungeons has its OWN shadNet login on the friends server. It is never your public shadNet login: the
@@ -98,15 +101,19 @@ TROUBLESHOOTING
     holding your Happy Dungeons login (step 2b).
   * Patches missing in Cheats / Patches: the HappyDungeons folder must be directly inside "patches", with
     files.json in it.
+  * The game runs too fast: the frame-rate patch is not applied. The log should list "Applied patch: Decouple
+    gameplay from frame rate"; if not, the HappyDungeons folder must hold only HappyDungeons.xml and files.json.
   * Lost your login: get it again with your key file (step 2, "key"; a password you picked: pick a new one).
   * Logs for a bug report: the shadPS4 folder > log > shad_log.txt.
 
 
 FILES
-  HappyDungeons/HappyDungeons.xml          the game talks to the friends server instead of Toylogic's old servers;
+  HappyDungeons/HappyDungeons.xml          all the patches, in one file:
+                                           the game talks to the friends server instead of Toylogic's old servers;
                                            an empty cloud save slot means "no save yet" (not "corrupt"); the NAT
                                            check counts as done; the game's network wait checks its socket
-                                           (otherwise co-op never sends anything)
-  HappyDungeons/HappyDungeons_fps.xml      game speed follows real time at any frame rate, the 30 fps cap is
-                                           lifted, and online co-op runs on the shared 60 Hz clock
-__SAVES__  happydungeons_account.py               gets your login (step 2); Python 3.6 or newer, no extra modules
+                                           (otherwise co-op never sends anything); game speed follows real time
+                                           at any frame rate, the 30 fps cap is lifted, and online co-op runs on
+                                           the shared 60 Hz clock
+__SAVES__  HappyDungeons/files.json                 tells shadPS4 the patch file is for CUSA09120
+  happydungeons_account.py                 gets your login (step 2); Python 3.6 or newer, no extra modules
