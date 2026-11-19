@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Happy Dungeons Players</title>
+<style>
+  :root {
+    --bg: #f4f2ee; --panel: #ffffff; --ink: #1d1b19; --muted: #6b665f; --line: #e3dfd8;
+    --accent: #c2581a; --accent-ink: #ffffff; --online: #2f9e5b; --idle: #9b958c; --danger: #b23a3a;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16151a; --panel: #1f1e25; --ink: #efedf2; --muted: #9c98a6; --line: #2e2c36;
+      --accent: #f08a3e; --accent-ink: #1a1208; --online: #4fce83; --idle: #6d6977; --danger: #ef6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  header {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px;
+    padding: 20px 24px 14px; border-bottom: 1px solid var(--line);
+  }
+  header h1 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
+  header .meta { color: var(--muted); font-size: 14px; }
+  header .me {
+    margin-left: auto; font-size: 14px; min-width: 0;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px;
+  }
+  header .me b { color: var(--accent); overflow-wrap: anywhere; }
+  header .myxuid { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--muted); }
+  header .myxuid code {
+    font: inherit; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums;
+    user-select: all; overflow-wrap: anywhere;
+  }
+  main {
+    display: grid; gap: 16px; padding: 18px 24px 40px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  section {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px 12px; min-width: 0;
+  }
+  section h2 {
+    margin: 0 0 10px; font-size: 13px; font-weight: 650; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted);
+  }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+  li:first-child { border-top: 0; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--idle); flex: none; }
+  .dot.on { background: var(--online); box-shadow: 0 0 0 3px color-mix(in srgb, var(--online) 22%, transparent); }
+  .who { min-width: 0; flex: 1; }
+  .name { font-weight: 600; overflow-wrap: anywhere; }
+  /* Gamertags can repeat, so every name carries its XUID. Inline-block: it sits beside the name when there is
+     room and drops under it as a whole when there is not. */
+  .xuid {
+    display: inline-block; font-size: 12px; font-weight: 400; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .what { color: var(--muted); font-size: 13px; }
+  .empty { color: var(--muted); font-size: 14px; padding: 4px 0 6px; }
+  button {
+    font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 7px;
+    padding: 5px 11px; border: 1px solid var(--line); background: transparent; color: var(--ink);
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.quiet:hover { border-color: var(--danger); color: var(--danger); }
+  button.copy { font-size: 12px; padding: 2px 9px; }
+  button:disabled { opacity: .5; cursor: default; }
+  form { display: flex; gap: 8px; margin-bottom: 10px; }
+  input {
+    flex: 1; min-width: 0; font: inherit; padding: 6px 10px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  .hint { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
+  .note { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 1.2em; }
+  .note.bad { color: var(--danger); }
+  /* ps4_account_patch v1 */
+  .ps4Box [hidden] { display: none !important; }
+  .ps4Box .ps4Opt { display: block; margin: 4px 0; }
+  .ps4Box .ps4Own { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0 24px; }
+  .ps4Box .ps4Own .hint { flex-basis: 100%; margin: 0; }
+  .ps4Box .ps4Login { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; }
+  .ps4Box .ps4Login code { font: inherit; font-weight: 600; user-select: all; overflow-wrap: anywhere; }
+  .ps4Box #ps4Go { margin-top: 10px; }
+  .ps4Box .ps4Steps { margin: 12px 0 0; }
+  /* end ps4_account_patch v1 */
+  #addNote { margin: -4px 0 8px; }
+  .tag {
+    font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--accent); margin-left: 6px;
+  }
+  .signin { grid-column: 1 / -1; }
+  .lobbiesBox { grid-column: 1 / -1; }
+  .joining {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 10px; padding: 9px 12px;
+    border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 14px;
+  }
+  .joining b { color: var(--accent); }
+  .seats { display: flex; gap: 4px; flex: none; }
+  .seat { width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--line); }
+  .seat.taken { background: var(--accent); border-color: var(--accent); }
+  .seat.held { background: color-mix(in srgb, var(--accent) 35%, transparent); border-color: var(--accent); }
+  /* A lobby whose players have other game data (another ServerData rev): the game would refuse to join it. */
+  .mismatch { flex: 0 1 13em; font-size: 13px; color: var(--muted); text-align: right; }
+  .signin p { margin: 0; color: var(--muted); }
+  @media (max-width: 520px) {
+    header, main { padding-left: 16px; padding-right: 16px; }
+    header .me { margin-left: 0; width: 100%; }
+    main { grid-template-columns: minmax(0, 1fr); }
+  }
+  /* Events (owners only) */
+  .eventsBox { grid-column: 1 / -1; }
+  .eventsBox li.ev { align-items: flex-start; }
+  .eventsBox li.ev > button, .eventsBox li.ev > .what { flex: none; margin-top: 2px; }
+  .evdesc { font-size: 13px; color: var(--muted); margin-top: 3px; max-width: 76ch; }
+  .evdesc.bad { color: var(--danger); }
+  .eventsBox h2.sub { margin-top: 16px; }
+  /* Client updates */
+  .tag.upd { color: var(--danger); }
+  .updatesBox { grid-column: 1 / -1; }
+  .updatesBox h2.sub { margin-top: 16px; }
+  .updateNeeded { grid-column: 1 / -1; border-color: var(--danger); }
+  .updateNeeded h2 { color: var(--danger); }
+  .updateNeeded p { margin: 0; }
+  .fjwhy { flex: 0 1 14em; font-size: 13px; color: var(--muted); text-align: right; }
+  /* Your save (Export my save) */
+  .saveBox .note { margin-top: 8px; }
+  .soloBox .note { margin-top: 8px; }   /* solo_patch v1 */
+  /* achievements_web_patch v1: Achievements */
+  .achBox { grid-column: 1 / -1; }
+  .achHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 0 10px; }
+  .achHead b { font-size: 18px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .achHead .what { flex: 1; min-width: 12em; }
+  .achSwitch { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .achSwitch button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .achGrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  .ach { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line);
+         border-radius: 8px; min-width: 0; }
+  .ach .badge { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+                font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+                background: color-mix(in srgb, var(--idle) 22%, transparent); color: var(--muted); }
+  .ach.got .badge { background: #e2a52b; color: #2a1c02; box-shadow: 0 0 0 2px color-mix(in srgb, #e2a52b 35%, transparent); }
+  .ach .t { font-weight: 600; overflow-wrap: anywhere; }
+  .ach .d { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .ach .when { font-size: 12px; color: var(--online); }
+  .ach.locked .t { color: var(--muted); }
+  .achBox h2.sub { margin-top: 16px; }
+  .achBox li { cursor: pointer; }
+  .achBox li .g { font-weight: 650; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Happy Dungeons</h1>
+  <span class="meta" id="count">Connecting…</span>
+  <span class="me" id="me"></span>
+</header>
+<main>
+  <section class="updateNeeded" id="updateNeeded" hidden>
+    <h2>Update needed</h2>
+    <p>This server needs a newer version of Happy Dungeons Online<span id="updNeededWhat"></span>. Close Happy Dungeons, then
+       start it again with its shortcut: the launcher updates it by itself and starts the game.</p>
+  </section>
+
+  <section class="signin" id="signin" hidden>
+    <h2>Not signed in</h2>
+    <p>Open this page with the <b>3 - Friends and Players</b> shortcut so it knows who you are.
+       Until then you can see how many players are online and how many lobbies are open, but not who.</p>
+  </section>
+
+  <section>
+    <h2>Online now</h2>
+    <ul id="online"></ul>
+  </section>
+
+  <section id="friendsBox">
+    <h2>Friends</h2>
+    <ul id="friends"></ul>
+    <p class="note" id="friendJoinNote" role="status"></p>
+  </section>
+
+  <section id="requestsBox">
+    <h2>Friend requests</h2>
+    <ul id="requests"></ul>
+  </section>
+
+  <section id="addBox">
+    <h2>Add a friend</h2>
+    <p class="hint" id="addHint">Names can repeat, so friends add each other by XUID. Yours is at the top of
+       this page: send it to your friends, and ask them for theirs.</p>
+    <form id="addForm" autocomplete="off">
+      <input id="addXuid" placeholder="Friend's XUID" inputmode="numeric" maxlength="24"
+             aria-label="Friend's XUID" aria-describedby="addHint">
+      <button class="primary" type="submit">Send request</button>
+    </form>
+    <p class="note" id="addNote" role="status"></p>
+  </section>
+
+  <section class="lobbiesBox">
+    <h2>Happy Dungeons lobbies</h2>
+    <div class="joining" id="joining" hidden></div>
+    <ul id="lobbies"></ul>
+    <p class="note" id="lobbyNote" role="status"></p>
+    <ul id="searching"></ul>
+  </section>
+
+  <section class="eventsBox" id="eventsBox" hidden>
+    <h2>Events <span class="tag">Owners only</span></h2>
+    <div class="joining" id="eventActive"></div>
+    <p class="hint">Players get a new event when they restart Happy Dungeons. Until they do, they keep the old one,
+       and players on different events are kept apart: they are not matched and cannot join each other's games.</p>
+    <p class="note bad" id="eventProblems" hidden></p>
+    <ul id="events"></ul>
+    <p class="note" id="eventNote" role="status"></p>
+    <h2 class="sub">Online players and their event</h2>
+    <ul id="eventPlayers"></ul>
+  </section>
+
+  <section class="updatesBox" id="updatesBox" hidden>
+    <h2>Client updates <span class="tag">Owners only</span></h2>
+    <div class="joining" id="updRelease"></div>
+    <p class="note bad" id="updProblems" hidden></p>
+    <p class="hint" id="updNow"></p>
+    <form id="updForm" autocomplete="off">
+      <input id="updMin" placeholder="Minimum version, like 2026.9.19.1200" inputmode="decimal" maxlength="23"
+             aria-label="Minimum client version" aria-describedby="updNow">
+      <button class="primary" type="submit">Set minimum</button>
+      <button type="button" class="quiet" id="updOff">Turn off</button>
+    </form>
+    <p class="note" id="updNote" role="status"></p>
+    <h2 class="sub">Players and their Setup version</h2>
+    <ul id="updPlayers"></ul>
+  </section>
+
+  <!-- solo_patch v1 -->
+  <section class="soloBox" id="soloBox" hidden>
+    <h2>Solo play</h2>
+    <p class="hint" id="soloState">Loading…</p>
+    <button type="button" class="primary" id="soloToggle">Turn solo play on</button>
+    <p class="note" id="soloNote" role="status"></p>
+  </section>
+
+  <section class="saveBox" id="saveBox" hidden>
+    <h2>Your save</h2>
+    <p class="hint">The export is a backup copy of your saves on this server. Keep it somewhere safe, and send it to
+       the server's owner if a save ever needs restoring.</p>
+    <button type="button" class="primary" id="saveExport">Export my save</button>
+    <p class="note" id="saveNote" role="status"></p>
+  </section>
+  <!-- ps4_account_patch v1 -->
+  <section class="ps4Box" id="ps4Box" hidden>
+    <h2>PS4 (shadPS4)</h2>
+    <p class="hint">Play the PS4 version of Happy Dungeons in the shadPS4 emulator as this same player: same character,
+       saves and friends. It signs in with its own login on this server, never with your public shadNet password.</p>
+    <div id="ps4Linked" hidden>
+      <p class="ps4Login">Account ID <code id="ps4Id"></code> Password <code id="ps4PwShown"></code>
+        <button type="button" class="copy" id="ps4Reveal">Show</button>
+        <button type="button" class="copy" id="ps4Change">Pick a new password</button></p>
+    </div>
+    <div id="ps4Make" hidden>
+      <label class="ps4Opt"><input type="radio" name="ps4How" value="made" checked> Make a login for me (random
+        password)</label>
+      <label class="ps4Opt"><input type="radio" name="ps4How" value="own"> I'll pick the Account ID and a NEW password,
+        only for Happy Dungeons</label>
+      <div class="ps4Own" id="ps4Own" hidden>
+        <input id="ps4NewId" placeholder="Account ID" maxlength="16" autocomplete="off">
+        <input id="ps4NewPw" type="password" placeholder="New password (8+)" maxlength="128" autocomplete="new-password">
+        <input id="ps4NewPw2" type="password" placeholder="Again" maxlength="128" autocomplete="new-password">
+        <p class="hint">NOT the password of your public shadNet account or of anything else.</p>
+      </div>
+      <button type="button" class="primary" id="ps4Go">Make my PS4 login</button>
+    </div>
+    <p class="hint ps4Steps">In shadPS4: Settings &gt; Manage Users &gt; Create User, pick it, click ShadNet..., tick
+       Enable ShadNet for this user and enter the Account ID and password. Click Set Default User on it before you play
+       Happy Dungeons. Patches and the rest of the setup: <a href="/ps4/account">PS4 setup page</a>.</p>
+    <p class="note" id="ps4Note" role="status"></p>
+  </section>
+  <!-- end ps4_account_patch v1 -->
+  <!-- achievements_web_patch v1 -->
+  <section class="achBox" id="achBox">
+    <h2>Achievements</h2>
+    <div class="achHead" id="achHead"></div>
+    <div class="achSwitch" id="achSwitch"></div>
+    <div class="achGrid" id="achGrid"></div>
+    <h2 class="sub" id="achPlayersHead">Everyone</h2>
+    <ul id="achPlayers"></ul>
+  </section>
+</main>
+<script>
+(() => {
+  // ps4_account_patch v1 - the player's PS4 (shadPS4) login, made by the PS4 gateway (/ps4/*). Reads the key like the
+  // achievements patch; the page's own script keeps it and cleans the address bar.
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  const params = new URLSearchParams(location.search);
+  let key = fragment.get("key") || params.get("key");
+  if (!key) { try { key = localStorage.getItem("wdKey"); } catch (e) { /* storage blocked */ } }
+  const $ = id => document.getElementById(id);
+  if (!key || !$("ps4Box")) return;
+  const [xuidBase, secret] = key.split(".");
+  if (!xuidBase || !secret) return;
+  let current = null;
+  const note = (text, bad) => { $("ps4Note").textContent = text; $("ps4Note").className = "note" + (bad ? " bad" : ""); };
+  const how = () => document.querySelector("input[name=ps4How]:checked").value;
+  async function call(path, body) {
+    const r = await fetch("/ps4/" + path, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ xuidBase, secret }, body || {})), cache: "no-store" });
+    let a = {};
+    try { a = await r.json(); } catch (e) { /* not JSON */ }
+    if (!r.ok || !a.ok) throw new Error(a.reason || "the PS4 service answered " + r.status);
+    return a;
+  }
+  function show(a) {
+    current = a;
+    $("ps4Box").hidden = false;
+    $("ps4Linked").hidden = !a.linked;
+    $("ps4Make").hidden = !!a.linked;
+    $("ps4NewId").readOnly = false;
+    $("ps4Go").textContent = "Make my PS4 login";
+    if (!a.linked) return;
+    $("ps4Id").textContent = a.npid;
+    $("ps4PwShown").textContent = a.ownPassword ? "the one you picked" : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+    $("ps4Reveal").hidden = !!a.ownPassword;
+  }
+  document.querySelectorAll("input[name=ps4How]").forEach(r => r.addEventListener("change", () => {
+    $("ps4Own").hidden = how() !== "own";
+  }));
+  $("ps4Reveal").addEventListener("click", () => {
+    if (current && current.password) { $("ps4PwShown").textContent = current.password; $("ps4Reveal").hidden = true; }
+  });
+  $("ps4Change").addEventListener("click", () => {
+    $("ps4Make").hidden = false;
+    document.querySelector("input[name=ps4How][value=own]").checked = true;
+    $("ps4Own").hidden = false;
+    $("ps4NewId").value = current.npid;
+    $("ps4NewId").readOnly = true;
+    $("ps4Go").textContent = "Set the new password";
+    note("");
+  });
+  $("ps4Go").addEventListener("click", async () => {
+    note("");
+    $("ps4Go").disabled = true;
+    try {
+      let body = {};
+      if (how() === "own") {
+        const npid = $("ps4NewId").value.trim(), pw = $("ps4NewPw").value;
+        if (!/^[A-Za-z][A-Za-z0-9_-]{2,15}$/.test(npid))
+          throw new Error("Account IDs are 3-16 letters, digits, - or _, starting with a letter.");
+        if (pw.length < 8) throw new Error("Pick a new password of at least 8 characters.");
+        if (pw !== $("ps4NewPw2").value) throw new Error("The two passwords differ.");
+        body = { npid: npid, password: pw };
+      }
+      const a = await call("link", body);
+      $("ps4NewPw").value = $("ps4NewPw2").value = "";
+      show(Object.assign(a, { linked: true }));
+      note(a.ownPassword ? "Done: your PS4 login uses the password you picked." : "Done. Click Show to see the password.");
+    } catch (e) {
+      note(e.message, true);
+    } finally {
+      $("ps4Go").disabled = false;
+    }
+  });
+  call("whoami").then(show).catch(() => { /* PS4 service not reachable, or not a player key: no box */ });
+})();
+</script>
+
+<script>
+(() => {
+  // achievements_web_patch v1 - reads only; the page's own script (below) keeps the key and cleans the address bar.
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  const params = new URLSearchParams(location.search);
+  let key = fragment.get("key") || params.get("key");
+  try { if (!key) key = localStorage.getItem("wdKey"); } catch (e) { }
+  const auth = key ? { Authorization: "XBL3.0 x=1;WD1." + key } : {};
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const day = iso => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); };
+  let catalog = null, mine = [], shown = null, viewing = null;
+
+  async function get(path, withAuth) {
+    const r = await fetch(path, { headers: withAuth ? auth : {}, cache: "no-store" });
+    if (!r.ok) throw Object.assign(new Error(r.status), { status: r.status });
+    return r.json();
+  }
+  const who = p => p.player && p.player > 1 ? `${esc(p.gamertag)} (player ${p.player})` : esc(p.gamertag);
+
+  function render(p) {
+    if (!catalog) return;
+    const got = new Map((p.unlocked || []).map(u => [u.id, u.at]));
+    const own = mine.some(m => m.xuid === p.xuid);
+    $("achHead").innerHTML = `<b>${p.count} / ${catalog.total}</b><b>${p.gamerscore} / ${catalog.totalGamerscore} G</b>
+      <span class="what">${own ? (mine.length > 1 ? who(p) + "'s achievements" : "Yours") : who(p) + "'s achievements"} - unlocked while playing with WinDurango.</span>
+      ${own ? "" : '<button type="button" id="achBack">Back to yours</button>'}`;
+    const order = [...catalog.achievements].sort((a, b) =>
+      (got.has(b.id) - got.has(a.id)) || (got.has(a.id) ? String(got.get(b.id)).localeCompare(String(got.get(a.id))) : a.id - b.id));
+    $("achGrid").innerHTML = order.map(a => {
+      const has = got.has(a.id), hidden = a.secret && !has;
+      return `<div class="ach ${has ? "got" : "locked"}"><span class="badge" title="${a.gamerscore} gamerscore">${a.gamerscore}G</span>
+        <span><div class="t">${hidden ? "Secret achievement" : esc(a.name)}</div>
+        <div class="d">${hidden ? "Keep playing to find out." : esc(a.description)}</div>
+        ${has ? `<div class="when">Unlocked ${esc(day(got.get(a.id)))}</div>` : ""}</span></div>`;
+    }).join("");
+    const back = $("achBack");
+    if (back) back.onclick = () => { viewing = null; render(shown || mine[0]); switcher(); };
+  }
+
+  function switcher() {
+    $("achSwitch").innerHTML = mine.length > 1 && !viewing ? mine.map(p =>
+      `<button type="button" data-achx="${esc(p.xuid)}" class="${shown && shown.xuid === p.xuid ? "on" : ""}">${who(p)} · ${p.gamerscore} G</button>`).join("") : "";
+  }
+
+  async function refresh() {
+    try {
+      if (!catalog) catalog = await get("/windurango/achievements/catalog");
+    } catch (e) { $("achBox").hidden = true; return; }   // a server without achievements
+    $("achBox").hidden = false;
+    // privacy_patch v2: the list is asked for with your key (the server sends you and your friends, the owners
+    // everyone); signed out, or with a key the server refuses, it is not asked for at all - no names.
+    let signedIn = !!key;
+    try {
+      if (key) {
+        const me = await get("/windurango/achievements/me", true);
+        mine = me.players || [];
+        shown = mine.find(p => shown && p.xuid === shown.xuid) || mine[0] || null;
+      }
+    } catch (e) { mine = []; shown = null; if (e.status === 401 || e.status === 403) signedIn = false; }
+    if (!signedIn) {
+      viewing = null;
+      $("achPlayersHead").textContent = "You and your friends";
+      $("achPlayers").innerHTML = '<li class="empty">Sign in to see your friends\' achievements.</li>';
+    } else {
+      try {
+        const all = await get("/windurango/achievements/players", true);
+        const friendsOnly = all.scope === "friends";
+        $("achPlayersHead").textContent = friendsOnly ? "You and your friends" : "Everyone";
+        $("achPlayers").innerHTML = all.players.length ? all.players.map(p =>
+          `<li data-achx="${esc(p.xuid)}"><span class="who"><div class="name">${esc(p.gamertag)} <span class="xuid">XUID ${esc(p.xuid)}</span></div>
+            <div class="what">${p.count} of ${all.total} unlocked</div></span><span class="g">${p.gamerscore} G</span></li>`).join("")
+          : '<li class="empty">Nobody has unlocked anything yet.</li>';
+      } catch (e) { $("achPlayers").innerHTML = '<li class="empty">Could not load the list.</li>'; }
+    }
+    if (viewing) {
+      try { render(await get("/windurango/achievements/" + encodeURIComponent(viewing), true)); } catch (e) { viewing = null; }
+    }
+    if (!viewing) {
+      if (shown) render(shown);
+      else $("achHead").innerHTML = '<span class="what">Open this page with the Happy Dungeons Friends shortcut (or Friends &amp; Players in the launcher) to see yours and your friends\'.</span>';
+      if (!shown) $("achGrid").innerHTML = "";
+    }
+    switcher();
+  }
+
+  $("achBox").addEventListener("click", async ev => {
+    const el = ev.target.closest("[data-achx]");
+    if (!el) return;
+    const xuid = el.getAttribute("data-achx");
+    const local = mine.find(p => p.xuid === xuid);
+    if (local) { viewing = null; shown = local; render(local); switcher(); return; }
+    try { viewing = xuid; render(await get("/windurango/achievements/" + encodeURIComponent(xuid), true)); switcher(); }
+    catch (e) { viewing = null; }
+  });
+
+  refresh();
+  setInterval(refresh, 60000);
+})();
+</script>
+<script>
+(() => {
+  // The shortcut opens this page with #key=<xuidBase>.<secret> - after the #, so the browser never sends it to
+  // the server and it stays out of the server's request log. Older shortcuts used ?key=. Keep the key and take
+  // it out of the address bar.
+  const params = new URLSearchParams(location.search);
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  let key = fragment.get("key") || params.get("key");
+  try {
+    if (key) localStorage.setItem("wdKey", key); else key = localStorage.getItem("wdKey");
+  } catch (e) { /* storage blocked: the key only lives for this visit */ }
+  if (params.has("key") || fragment.has("key")) history.replaceState(null, "", location.pathname);
+
+  const auth = key ? { Authorization: "XBL3.0 x=1;WD1." + key } : {};
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+  async function get(path, withAuth) {
+    const r = await fetch(path, { headers: withAuth ? auth : {}, cache: "no-store" });
+    if (!r.ok) throw Object.assign(new Error(r.status), { status: r.status });
+    return r.json();
+  }
+  // Friend actions name the other player by XUID, never by gamertag: two players can have the same name.
+  async function act(path, xuid) {
+    const r = await fetch(path, {
+      method: "POST", headers: { ...auth, "Content-Type": "application/json" },
+      body: JSON.stringify({ xuid })
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(body.reason || "Something went wrong"), { status: r.status });
+    return body;
+  }
+
+  const xuidTag = x => x ? ` <span class="xuid">XUID ${esc(x)}</span>` : "";
+  const row = (p, right = "") => `
+    <li><span class="dot${p.online ? " on" : ""}" aria-hidden="true"></span>
+      <span class="who"><div class="name">${esc(p.gamertag)}${myXuid && p.xuid === myXuid ? '<span class="tag">You</span>' : ""}${xuidTag(p.xuid)}${updBadge(p)}</div>
+      <div class="what">${esc(p.what || (p.online ? (p.game ? p.game + " · " : "") + p.presenceText : "Offline"))}${updVer(p)}</div></span>
+      ${right}</li>`;
+  const list = (el, items, render, empty) =>
+    $(el).innerHTML = items.length ? items.map(render).join("") : `<li class="empty">${empty}</li>`;
+  // target: the row's XUID for friend actions, the lobby id for join/unjoin.
+  const btn = (label, action, target, cls = "") =>
+    `<button class="${cls}" data-action="${action}" data-target="${esc(target)}">${label}</button>`;
+
+  async function refresh() {
+    // Who you are first: the lists below mark your own row and leave Join off your own lobby.
+    let me = null;
+    if (key) {
+      try {
+        me = await get("/windurango/me", true);
+        myXuid = me.you.xuid;
+        updNeeded(false);
+      } catch (e) {
+        if (e.status === 426) updNeeded(true);
+        if (e.status === 401 || e.status === 403) {
+          try { localStorage.removeItem("wdKey"); } catch (x) {}
+          key = null;
+        }
+      }
+    }
+
+    try {
+      const everyone = await get("/windurango/players", true);   // privacy_patch v2: with the key (v1 sends names only to it)
+      updInfo = everyone.clientVersions || {};
+      // privacy_patch v1: only you and your friends, even for the owner (the server sends the owner everyone).
+      const mineAndFriends = new Set(me ? [me.you.xuid, ...me.friends.map(f => f.xuid)] : []);
+      const online = everyone.players.filter(p => p.online && mineAndFriends.has(p.xuid));
+      $("count").textContent = `${everyone.online} player${everyone.online === 1 ? "" : "s"} online`;
+      list("online", online, p => row(p), me ? "None of your friends are online right now." : "Sign in to see which friends are online.");
+    } catch (e) { $("count").textContent = "Server unreachable"; }
+
+    try {
+      const mm = await get("/windurango/lobbies", true);
+      // privacy_patch v2: signed out, lobbies are only counted - never who hosts or who is looking for one.
+      const lobbyCount = me ? null : { open: Number(mm.openLobbies ?? mm.lobbies.filter(l => l.open).length) || 0,
+                                       looking: Number(mm.searchingCount ?? mm.searching.length) || 0 };
+      if (lobbyCount) { mm.lobbies = []; mm.searching = []; mm.joining = null; }
+      const seats = l => `<span class="seats" aria-hidden="true">${Array.from({ length: l.maxPlayers }, (_, i) =>
+        `<span class="seat${i < l.players.length ? (l.players[i].reserved ? " held" : " taken") : ""}"></span>`).join("")}</span>`;
+      list("lobbies", mm.lobbies, l => `
+        <li>${seats(l)}<span class="who"><div class="name">${esc(l.host)}${l.kind === "seeker" ? " is looking for players" : "'s lobby"}${xuidTag(l.hostXuid)}</div>
+        <div class="what">${esc(l.stageText)} · ${l.players.length} / ${l.maxPlayers} ·
+          ${l.players.map(p => esc(p.gamertag) + (p.host ? " (host)" : p.reserved ? " (joining)" : "")).join(", ")}</div></span>
+        ${key && l.open && !mine(l) ? (l.sameVersion === false
+            ? '<span class="mismatch">different game data - whoever is behind must update (press Play in Happy Dungeons Online) or restart the game</span>'
+              + (mm.joining === l.id ? btn("Cancel", "unjoin", l.id, "quiet") : "")
+            : mm.joining === l.id
+            ? btn("Joining…", "unjoin", l.id, "quiet")
+            : btn("Join", "join", l.id, "primary"))
+          : l.solo ? '<span class="what">Solo play</span>'
+          : (l.open ? "" : '<span class="what">Full</span>')}</li>`,
+        lobbyCount ? `${lobbyCount.open} open lobb${lobbyCount.open === 1 ? "y" : "ies"} right now`
+          + (lobbyCount.looking ? `, ${lobbyCount.looking} player${lobbyCount.looking === 1 ? "" : "s"} looking for one` : "")
+          + ". Sign in to see them and join."
+          : "Nobody is hosting right now. Host a game in Happy Dungeons and it shows up here.");
+      const joining = mm.lobbies.find(l => l.id === mm.joining);
+      $("joining").hidden = !joining;
+      if (joining) $("joining").innerHTML = `<span>Joining <b>${esc(joining.host)}</b>'s lobby (${esc(joining.stageText)}):
+        in Happy Dungeons, search for a game to <b>join</b> now.</span>${btn("Cancel", "unjoin", joining.id, "quiet")}`;
+      // A searcher with a lobby of its own is already listed above ("... is looking for players"): once is enough.
+      const listed = new Set(mm.lobbies.filter(l => l.kind === "seeker").map(l => l.hostXuid));
+      const searching = mm.searching.filter(p => !listed.has(p.xuid));
+      $("searching").innerHTML = searching.length ? searching.map(p => `
+        <li><span class="dot on" aria-hidden="true"></span><span class="who"><div class="name">${esc(p.gamertag)}${xuidTag(p.xuid)}</div>
+        <div class="what">Looking for a lobby · ${esc(p.stageText)}</div></span></li>`).join("") : "";
+    } catch (e) { list("lobbies", [], null, "Could not load lobbies."); }
+
+    if (!me) { signedOut(); if (updBlocked) $("signin").hidden = true; return; }
+    $("signin").hidden = true;
+    for (const id of ["friendsBox", "requestsBox", "addBox", "soloBox"]) $(id).hidden = false;   // solo_patch v1
+    showMe(me.you);
+    showSolo(me.you && me.you.solo);   // solo_patch v1
+    list("friends", me.friends, p => row(p, friendJoinButton(p) + btn("Remove", "remove", p.xuid, "quiet")),
+         "No friends yet. Add one by XUID below.");
+    const requests = [
+      ...me.incoming.map(p => row(p, btn("Accept", "add", p.xuid, "primary") + btn("Decline", "remove", p.xuid, "quiet"))),
+      // privacy_patch v2: "Request sent" whether or not the server says they are online (it no longer does).
+      ...me.outgoing.map(p => row({ ...p, online: false, what: "Request sent" }, btn("Cancel", "remove", p.xuid, "quiet")))
+    ];
+    $("requests").innerHTML = requests.length ? requests.join("") : '<li class="empty">No requests.</li>';
+  }
+
+  // The header is only rebuilt when who you are changes: rebuilding it every refresh would reset the Copy button.
+  let shownMe = "";
+  function showMe(you) {
+    const sig = JSON.stringify([you.gamertag, you.xuid]);
+    if (sig === shownMe) return;
+    shownMe = sig;
+    $("me").innerHTML = `<span>Signed in as <b>${esc(you.gamertag)}</b></span>
+      <span class="myxuid">Your XUID: <code id="myXuid">${esc(you.xuid)}</code>
+        <button type="button" class="copy" id="copyXuid">Copy</button></span>`;
+  }
+
+  // solo_patch v1 - Solo play. While it is on the server never puts anyone into your dungeons and never puts you
+  // into anyone else's; you still search and start a dungeon the same way, alone. The state comes from
+  // /windurango/me (you.solo) on every refresh and is changed with POST /windurango/me/solo (your key).
+  let soloState = null;
+  function showSolo(on) {
+    soloState = on === true;
+    $("soloState").innerHTML = soloState
+      ? "<b>Solo play: on</b> - nobody will join your dungeons, and you will not be put into anyone else's. "
+        + "Search for a game in Happy Dungeons as usual and start the dungeon yourself."
+      : "<b>Solo play: off</b> - other players can be matched into your dungeons. "
+        + "Turn it on to play every dungeon alone.";
+    $("soloToggle").textContent = soloState ? "Turn solo play off" : "Turn solo play on";
+    $("soloToggle").className = soloState ? "quiet" : "primary";
+  }
+  function soloNote(text, bad) {
+    $("soloNote").textContent = text;
+    $("soloNote").className = "note" + (bad ? " bad" : "");
+  }
+  $("soloToggle").addEventListener("click", async () => {
+    if (!key || soloState === null) return;
+    $("soloToggle").disabled = true;
+    soloNote("Saving…");
+    try {
+      const res = await fetch("/windurango/me/solo", {
+        method: "POST", headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ solo: !soloState })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.text || out.reason || "Something went wrong");
+      showSolo(out.solo);
+      soloNote(out.text || "");
+    } catch (e) { soloNote(e.message || "That did not work. Try again.", true); }
+    $("soloToggle").disabled = false;
+    await refresh();
+  });
+
+  function signedOut() {
+    $("signin").hidden = false;
+    for (const id of ["friendsBox", "requestsBox", "addBox", "soloBox"]) $(id).hidden = true;   // solo_patch v1
+    soloState = null;
+    $("me").textContent = "";
+    shownMe = "";
+    myXuid = null;
+  }
+
+  // navigator.clipboard only exists on https (or localhost) pages; the server is usually plain http, so fall back
+  // to the old select-and-copy.
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* no clipboard API here */ }
+    const t = document.createElement("textarea");
+    t.value = text;
+    t.setAttribute("readonly", "");
+    t.style.cssText = "position:fixed;top:0;left:0;opacity:0;font-size:16px";
+    document.body.appendChild(t);
+    t.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { /* blocked */ }
+    t.remove();
+    return ok;
+  }
+  let copyTimer = 0;
+  $("me").addEventListener("click", async ev => {
+    const b = ev.target.closest("#copyXuid");
+    if (!b) return;
+    const ok = await copyText($("myXuid").textContent);
+    if (!ok) getSelection().selectAllChildren($("myXuid"));   // could not copy: select it to copy by hand
+    b.textContent = ok ? "Copied" : "Selected";
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => { b.textContent = "Copy"; }, 1600);
+  });
+
+  function note(text, bad) { $("addNote").textContent = text; $("addNote").className = "note" + (bad ? " bad" : ""); }
+  const said = { requested: "Request sent.", friends: "You are now friends.", "already friends": "Already friends." };
+  let myXuid = null;
+  const mine = l => myXuid && l.hostXuid === myXuid;
+
+  async function join(lobby) {
+    const r = await fetch("/windurango/lobbies/join", {
+      method: "POST", headers: { ...auth, "Content-Type": "application/json" },
+      body: JSON.stringify({ lobby })
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(body.reason || "Something went wrong");
+    return body;
+  }
+  function lobbyNote(text, bad) { $("lobbyNote").textContent = text; $("lobbyNote").className = "note" + (bad ? " bad" : ""); }
+
+  document.body.addEventListener("click", async ev => {
+    const b = ev.target.closest("button[data-action]");
+    if (!b) return;
+    b.disabled = true;
+    if (b.dataset.action === "join" || b.dataset.action === "unjoin") {
+      try {
+        const r = await join(b.dataset.action === "join" ? b.dataset.target : null);
+        lobbyNote(r.joining ? r.howTo : "");
+      } catch (e) { lobbyNote(e.message, true); }
+      await refresh();
+      return;
+    }
+    try {
+      const r = await act("/windurango/friends/" + b.dataset.action, b.dataset.target);
+      if (r.state) note(said[r.state] || r.state);
+    } catch (e) { note(e.message, true); }
+    await refresh();
+  });
+
+  // A XUID is a 15-17 digit number (signed-in XUIDs here are 16). Spaces are dropped so a pasted "2535 4..." works.
+  $("addForm").addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const xuid = $("addXuid").value.replace(/\s+/g, "");
+    if (!xuid) { note("Enter your friend's XUID.", true); return; }
+    if (!/^\d+$/.test(xuid)) {
+      note("Enter a XUID (numbers only), not a gamertag: names can repeat. Your friend's XUID is at the top of their players page.", true);
+      return;
+    }
+    if (xuid.length < 15 || xuid.length > 17) {
+      note(`A XUID is 15 to 17 digits long; that one has ${xuid.length}. Check it and try again.`, true);
+      return;
+    }
+    if (xuid === myXuid) { note("That is your own XUID. Enter your friend's.", true); return; }
+    try {
+      const r = await act("/windurango/friends/add", xuid);
+      note(said[r.state] || r.state);
+      $("addXuid").value = "";
+    } catch (e) { note(e.status === 404 ? `Nobody on this server has XUID ${xuid}.` : e.message, true); }
+    refresh();
+  });
+  $("addXuid").addEventListener("input", () => { if ($("addNote").classList.contains("bad")) note(""); });
+
+  // Events - owners only. /windurango/admin/events answers 403 to everyone else; the panel then stays hidden for
+  // this visit. Its buttons carry data-ev, not data-action: the page's click handler sends data-action to the
+  // friends routes.
+  let eventsAllowed = null;   // null: not asked yet, true: an owner, false: not one
+  let eventsBusy = false;
+  const evStatus = s => ({ recommended: "Recommended", playable: "Playable", experimental: "Experimental",
+                           duplicate: "Older copy", blocked: "Blocked" })[s] || s;
+  const when = iso => { const d = new Date(iso); return isNaN(d) ? String(iso) : d.toLocaleString(); };
+  function evNote(text, bad) { $("eventNote").textContent = text; $("eventNote").className = "note" + (bad ? " bad" : ""); }
+
+  async function refreshEvents() {
+    if (!key || eventsAllowed === false) { $("eventsBox").hidden = true; return; }
+    let r;
+    try { r = await get("/windurango/admin/events", true); }
+    catch (e) {
+      if (e.status === 401 || e.status === 403) eventsAllowed = false;
+      $("eventsBox").hidden = true;
+      return;
+    }
+    eventsAllowed = true;
+    $("eventsBox").hidden = false;
+    const a = r.active;
+    $("eventActive").innerHTML = a
+      ? `<span>On now: <b>${esc(a.name)}</b>${a.rev != null ? ` (event build ${esc(a.rev)})` : ""}
+           · ServerData rev ${esc(r.serverDataRev)}${a.since ? ` · since ${esc(when(a.since))}` : ""}${a.by ? ` · ${esc(a.by)}` : ""}</span>
+         <button type="button" class="quiet" data-ev="deactivate"${eventsBusy ? " disabled" : ""}>Turn off</button>`
+      : `<span>No event is on · ServerData rev ${esc(r.serverDataRev ?? "?")}</span>`;
+    const problems = [r.library.problem, r.manifestProblem].filter(Boolean);
+    $("eventProblems").textContent = problems.join(" ");
+    $("eventProblems").hidden = !problems.length;
+    list("events", r.events, e => `
+      <li class="ev"><span class="who"><div class="name">${esc(e.name)}<span class="tag">${esc(evStatus(e.status))}</span></div>
+        <div class="what">${e.originalStart ? "Ran " + esc(e.originalStart.slice(0, 10)) + " to " + esc((e.originalEnd || "").slice(0, 10)) + " · " : ""}${e.missions.length} mission${e.missions.length === 1 ? "" : "s"} · event build ${esc(e.rev)}</div>
+        <div class="evdesc">${esc(e.description)}</div>
+        ${e.caveat ? `<div class="evdesc"><b>Note:</b> ${esc(e.caveat)}</div>` : ""}
+        ${!e.switchable && e.blockedReason ? `<div class="evdesc bad">${esc(e.blockedReason)}</div>` : ""}
+        ${e.problem ? `<div class="evdesc bad">${esc(e.problem)}</div>` : ""}</span>
+        ${e.active ? '<span class="what">On now</span>'
+          : `<button type="button" class="primary" data-ev="activate" data-id="${esc(e.id)}" data-name="${esc(e.name)}"${e.available && !eventsBusy ? "" : " disabled"}>Activate</button>`}</li>`,
+      "The event library is empty.");
+    list("eventPlayers", r.players, p => `
+      <li><span class="dot on" aria-hidden="true"></span><span class="who"><div class="name">${esc(p.gamertag)}${xuidTag(p.xuid)}</div>
+        <div class="what">${p.upToDate === true ? "Has the event that is on"
+          : p.upToDate === false ? "Other game data (" + esc(p.gameData) + ") - gets the event that is on when they restart"
+          : "Not known until they search for a game"}</div></span></li>`,
+      "Nobody is online.");
+  }
+
+  $("eventsBox").addEventListener("click", async ev => {
+    const b = ev.target.closest("button[data-ev]");
+    if (!b || eventsBusy) return;
+    const activate = b.dataset.ev === "activate";
+    const question = activate
+      ? `Switch everyone to "${b.dataset.name}"?\n\nPlayers get it when they restart Happy Dungeons. Until then they keep the old event, and players on different events are kept apart.`
+      : "Turn the event off for everyone?\n\nPlayers lose it when they restart Happy Dungeons. Until then they keep it, and are kept apart from players who have restarted.";
+    if (!confirm(question)) return;
+    eventsBusy = true;
+    b.disabled = true;
+    try {
+      const r = await fetch("/windurango/admin/events/" + (activate ? "activate" : "deactivate"), {
+        method: "POST", headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify(activate ? { event: b.dataset.id } : {})
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.reason || "Something went wrong");
+      evNote(body.changed === false ? "Nothing to change: " + (body.note || "")
+        : `Done - ServerData rev ${body.rev}. ${body.note || ""}`
+          + (body.skipped && body.skipped.length ? ` Your own ${body.skipped.join(", ")} stayed as it is.` : ""));
+    } catch (e) { evNote(e.message, true); }
+    eventsBusy = false;
+    await refreshEvents();
+  });
+
+  refreshEvents();
+  setInterval(() => { if (!document.hidden && eventsAllowed) refreshEvents(); }, 10000);
+
+  // Client updates. Every row shows the Setup version the player's launcher last reported and a badge when the
+  // server's minimum keeps them out. The panel is for owners only (the same "owners" as Events):
+  // /windurango/client/admin/status answers 403 to everyone else, and the panel then stays hidden for this visit.
+  let updAllowed = null;   // null: not asked yet, true: an owner, false: not one
+  let updBusy = false;
+  let updBlocked = false;  // the viewer's own game is kept out until their launcher updates it
+  let updMinAsked = false;
+  let updInfo = {};        // xuid -> {clientVersion, needsUpdate}: /windurango/players' clientVersions
+  const updOf = x => updInfo[x] || {};
+  const updBadge = p => updOf(p.xuid).needsUpdate ? '<span class="tag upd">Needs update</span>' : "";
+  const updVer = p => updOf(p.xuid).clientVersion ? " · Setup " + esc(updOf(p.xuid).clientVersion) : "";
+  const updWhen = iso => { const d = new Date(iso); return isNaN(d) ? String(iso) : d.toLocaleString(); };
+  const updSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  function updNote(text, bad) { $("updNote").textContent = text; $("updNote").className = "note" + (bad ? " bad" : ""); }
+
+  async function updNeeded(on) {
+    updBlocked = on;
+    $("updateNeeded").hidden = !on;
+    if (!on || updMinAsked) return;
+    updMinAsked = true;
+    try {
+      const res = await fetch("/windurango/me", { headers: auth, cache: "no-store" });
+      const info = await res.json();
+      if (res.status === 426 && info.minVersion)
+        $("updNeededWhat").textContent = ` (${info.minVersion} or newer; yours is ${info.yourVersion || "older"})`;
+    } catch (e) { /* the general text is enough */ }
+  }
+
+  async function refreshUpdates() {
+    if (!key || updAllowed === false) { $("updatesBox").hidden = true; return; }
+    let st;
+    try { st = await get("/windurango/client/admin/status", true); }
+    catch (e) {
+      if (e.status === 401 || e.status === 403) updAllowed = false;
+      $("updatesBox").hidden = true;
+      return;
+    }
+    if (!st || !st.release || !Array.isArray(st.players)) { $("updatesBox").hidden = true; return; }
+    updAllowed = true;
+    $("updatesBox").hidden = false;
+    const rel = st.release;
+    const need = st.minClientVersion;
+    $("updRelease").innerHTML = rel.state === "ok"
+      ? `<span>Published: <b>Setup ${esc(rel.version)}</b> · ${esc(rel.file)} · ${esc(updSize(rel.size))}${rel.issuedAt ? " · signed " + esc(updWhen(rel.issuedAt)) : ""}${rel.keyId ? " · key " + esc(rel.keyId) : ""}</span>
+         ${need === rel.version ? "" : `<button type="button" class="quiet" data-upd="require" data-version="${esc(rel.version)}"${updBusy ? " disabled" : ""}>Require ${esc(rel.version)}</button>`}`
+      : rel.state === "none"
+      ? "<span>No release is published: launchers start the game without updating.</span>"
+      : `<span>A release is in data/client but it is not served: ${esc(rel.problem)}</span>`;
+    const problems = [st.minProblem, st.key && st.key.problem,
+      st.key && !st.key.configured ? 'server_config.json has no "clientUpdateKey" (the public key): nothing can be published or served.' : ""]
+      .filter(Boolean);
+    $("updProblems").textContent = problems.join(" ");
+    $("updProblems").hidden = !problems.length;
+    $("updNow").textContent = need
+      ? `Minimum now: ${need}. Players below it, and players whose launcher never reported a version, can't play until they update. Owners are never blocked.`
+      : "No minimum version: nobody is blocked for an old Setup.";
+    $("updOff").disabled = !need || updBusy;
+    list("updPlayers", st.players, pl => `
+      <li><span class="dot${pl.online ? " on" : ""}" aria-hidden="true"></span><span class="who"><div class="name">${esc(pl.gamertag)}${xuidTag(pl.xuid)}${pl.owner ? '<span class="tag">Owner</span>' : ""}${pl.needsUpdate ? '<span class="tag upd">Needs update</span>' : ""}</div>
+        <div class="what">${pl.clientVersion ? "Setup " + esc(pl.clientVersion) + (pl.clientSeen ? " · reported " + esc(updWhen(pl.clientSeen)) : "")
+          : pl.owner ? "No version reported (an owner's own game needs none)" : "Never reported a version (a Setup from before the updater)"}</div></span></li>`,
+      "Nobody has signed up yet.");
+  }
+
+  async function updPost(payload) {
+    const res = await fetch("/windurango/client/admin/min-version", {
+      method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
+    const answer = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(answer.reason || "Something went wrong");
+    return answer;
+  }
+
+  // Set (a version) or clear (null) the minimum: the server says first whom it would block, the owner confirms.
+  async function updSet(minVersion) {
+    if (updBusy) return;
+    updBusy = true;
+    try {
+      const preview = await updPost({ minVersion, preview: true });
+      const w = preview.wouldBlock;
+      const names = w.online.map(x => x.gamertag).join(", ");
+      const question = minVersion
+        ? `Require Happy Dungeons Online ${preview.minVersion} or newer?\n\n`
+          + `${w.onlineCount} player${w.onlineCount === 1 ? "" : "s"} online now would be blocked${names ? " (" + names + ")" : ""}, ${w.total} in all. `
+          + "They can't play until their launcher updates them - it does when they start Happy Dungeons with its shortcut. Owners are never blocked."
+        : "Turn the minimum version off?\n\nNobody will be blocked for an old Setup any more.";
+      if (!confirm(question)) { updNote("Nothing changed."); return; }
+      const done = await updPost({ minVersion });
+      updNote(!done.changed ? "Nothing to change."
+        : minVersion ? `Minimum set to ${done.minVersion}: ${done.blocked.onlineCount} online and ${done.blocked.total} in all are below it until they update.`
+        : "Minimum turned off: nobody is blocked.");
+      if (done.changed) $("updMin").value = "";
+    } catch (e) { updNote(e.message, true); }
+    finally { updBusy = false; }
+    await refreshUpdates();
+  }
+
+  $("updForm").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const v = $("updMin").value.trim();
+    if (!/^\d{1,5}(\.\d{1,5}){0,3}$/.test(v)) { updNote("Enter a version like 2026.9.19.1200.", true); return; }
+    updSet(v);
+  });
+  $("updOff").addEventListener("click", () => updSet(null));
+  $("updatesBox").addEventListener("click", ev => {
+    const b = ev.target.closest("button[data-upd]");
+    if (b && !updBusy) updSet(b.dataset.version);
+  });
+
+  refreshUpdates();
+  setInterval(() => { if (!document.hidden && updAllowed) refreshUpdates(); }, 10000);
+
+  // Friends join (friends_join_web_patch.py): Join on a friend who is in an open lobby - the same join the in-game
+  // Guide menu arms: your next search for a game to join in Happy Dungeons goes into that friend's lobby. When Join
+  // is not possible the friend's row says why (the server's words). The buttons carry data-fjoin, not data-action:
+  // the page's click handler sends data-action to the friends routes.
+  function friendJoinButton(p) {
+    const j = p.join;
+    if (!j) return "";   // a server without Join
+    if (j.reason === "joining")
+      return `<button type="button" class="quiet" data-fjoin="cancel" title="${esc(j.text)}">Joining…</button>`;
+    if (j.can)
+      return `<button type="button" class="primary" data-fjoin="join" data-xuid="${esc(p.xuid)}" title="${esc(j.text)}">Join</button>`;
+    // solo_patch v1: "solo" (they play alone) and "youSolo" (you do) say so, like the other reasons.
+    return ["together", "joiningYou", "full", "otherData", "solo", "youSolo"].includes(j.reason) ? `<span class="fjwhy">${esc(j.text)}</span>` : "";
+  }
+  function friendJoinNote(text, bad) {
+    $("friendJoinNote").textContent = text;
+    $("friendJoinNote").className = "note" + (bad ? " bad" : "");
+  }
+  $("friends").addEventListener("click", async ev => {
+    const b = ev.target.closest("button[data-fjoin]");
+    if (!b) return;
+    b.disabled = true;
+    try {
+      const res = await fetch("/windurango/friends/join", {
+        method: "POST", headers: { ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ xuid: b.dataset.fjoin === "join" ? b.dataset.xuid : null })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.text || out.reason || "Something went wrong");
+      friendJoinNote(out.state === "cancelled" ? "Join cancelled."
+        : out.state === "placed" ? `${out.text} ${out.howTo}` : `${out.text}. ${out.howTo}`);
+    } catch (e) { friendJoinNote(e.message, true); }
+    await refresh();
+  });
+
+  refresh();
+  setInterval(() => { if (!document.hidden) refresh(); }, 4000);
+
+  // Your save. "Export my save" downloads a zip of your own saves (GET /windurango/save/export, with your key) under
+  // the name the server gives it. The box shows only while the page is signed in, i.e. while the header says who you
+  // are (showMe fills it, signedOut empties it). The button has an id, not data-action: the page's click handler
+  // sends data-action to the friends routes.
+  const saveSays = {
+    401: "Sign in first: open this page with the 3 - Friends and Players shortcut.",
+    403: "The server did not accept this page's key. Open the page again with the 3 - Friends and Players shortcut.",
+    404: "Nothing is saved on this server for you yet. Play Happy Dungeons once, then export.",
+    413: "Your save is too big to export from this page. Ask the server's owner for a copy.",
+    426: "Your game needs an update first. Start Happy Dungeons with its shortcut (the launcher updates it), then try again.",
+    429: "You exported a few times just now. Try again in a few minutes."
+  };
+  const saveSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  let saveBusy = false;
+  function saveNote(text, bad) { $("saveNote").textContent = text; $("saveNote").className = "note" + (bad ? " bad" : ""); }
+  function saveSync() { $("saveBox").hidden = !(key && $("me").textContent.trim()); }
+  function saveFileName(disposition) {
+    const found = /filename="([^"]+)"/.exec(disposition || "");
+    return found ? found[1].replace(/[\\/:*?"<>|]+/g, "_") : "HappyDungeons-save.zip";
+  }
+  function saveProblem(status, info) {
+    if (status === 429 && info.retryAfter > 0) {
+      const minutes = Math.ceil(info.retryAfter / 60);
+      return `You exported a few times just now. Try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+    }
+    if (status === 413 && info.limit > 0)
+      return `Your save is bigger than the ${saveSize(info.limit)} this server exports. Ask the server's owner for a copy.`;
+    return saveSays[status] || `The export did not work (error ${status}${info.reason ? ": " + info.reason : ""}). Try again later.`;
+  }
+
+  $("saveExport").addEventListener("click", async () => {
+    if (saveBusy || !key) return;
+    saveBusy = true;
+    $("saveExport").disabled = true;
+    saveNote("Packing your save…");
+    try {
+      let res;
+      try { res = await fetch("/windurango/save/export", { headers: auth, cache: "no-store" }); }
+      catch (e) { throw new Error("Could not reach the server. Check your connection and try again."); }
+      if (!res.ok) throw new Error(saveProblem(res.status, await res.json().catch(() => ({}))));
+      let blob;
+      try { blob = await res.blob(); }
+      catch (e) { throw new Error("The download broke off before it finished. Try again."); }
+      const name = saveFileName(res.headers.get("Content-Disposition"));
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      link.hidden = true;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      saveNote(`Downloaded ${name} (${saveSize(blob.size)}). Keep it somewhere safe.`);
+    } catch (e) { saveNote(e.message || "The export did not work. Try again later.", true); }
+    saveBusy = false;
+    $("saveExport").disabled = false;
+  });
+
+  saveSync();
+  if (typeof MutationObserver === "function")
+    new MutationObserver(saveSync).observe($("me"), { childList: true, subtree: true, characterData: true });
+  else setInterval(saveSync, 1000);
+})();
+</script>
+</body>
+</html>

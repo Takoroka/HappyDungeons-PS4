@@ -15,6 +15,7 @@ server-side services. No game files, firmware or user data are included; you nee
 | `tools/build_patch_pack.py` | Builds the patch pack (one folder for shadPS4's `patches` folder; any OS). |
 | `tools/build_player_package.py`, `dist-src/` | The player package and its setup/account scripts. |
 | `server/hd_ps4_gateway.py` | PS4 gateway in front of shadNet: links PS4 accounts to the Happy Dungeons server (saves, friends, events, shop), Happy Dungeons account sign-up. |
+| `dungeons-server/` | The Happy Dungeons server itself (`experimentalserver.py`, the players website, VPS deploy kit, event-order tools): identities, saves, friends, lobbies, events, shop, achievements. The PS4 gateway runs next to it. |
 | `deploy/` | VPS deployment (`push-vps.ps1`, `vps/install.sh`, service units, config templates with placeholders). |
 | `shadps4/user/patches/` | The patch files as installed (`HappyDungeonsLocal` = local-server variant, `HappyDungeonsFps`). |
 | `tools/*` (others) | Reverse-engineering and test tools used to find the fixes (hidden-desktop test clients, memory/packet probes, hardware write-watch, disassembly helpers). |

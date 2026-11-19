@@ -15,6 +15,7 @@
 !/deploy/
 !/dist-src/
 !/shadps4/
+!/dungeons-server/
 
 # server: code only (no data, logs)
 /server/*
@@ -38,3 +39,10 @@ __pycache__/
 *.db
 *.tar.gz
 *.zip
+
+# dungeons-server: code, docs and the config EXAMPLE only - never the live config, player data, logs or backups
+/dungeons-server/data/
+/dungeons-server/server_config.json
+/dungeons-server/**/*.before-*
+/dungeons-server/**/*.pak
+/dungeons-server/**/discord_app_id.txt
