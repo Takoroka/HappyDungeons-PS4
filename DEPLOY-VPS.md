@@ -278,3 +278,20 @@ Not tested yet: a game boot from the package. It waits until the multiplayer tes
 - **The shadNet game protocol is unencrypted**, same as the public shadNet. The gateway gives each PS4 account its own random password, so a sniffed one only exposes that PS4 login (which can reach that player's saves), never their Dungeons key.
 - **PS4↔PS4 co-op uses direct peer connections** (UDP port 3658 on players' PCs, UPnP or a forwarded port). There is no relay like the PC build's port 3075, so strict NATs may fail to connect.
 - **Every linked PS4 sign-in fetches server data with the player's own key.** It shows in the server's log as `[SERVERDATA] <gamertag> downloaded …`, like PC clients.
+
+## Live test from one PC (2026-11-19)
+
+Two copies of the Windows package (throwaway players PSLiveTestA / PSLiveTestB, hidden desktops) against the VPS:
+- Setup made both players on the live server (new player, then again from the key file): OK.
+- shadNet sign-in, server event/shop data (vulcan files), new-player save written to the server and loaded back on
+  the next start (no second "new save" prompt): OK.
+- Found and fixed: the bundled shadPS4 asked a "Save Migration" question on its first start (it does whenever
+  user/home/1000 is missing) -> setup now creates user/home/1000-1003; the package shipped enable_upnp=false ->
+  now true (config.json and setup).
+- Co-op lobby (local-saves patch on, seeded test character): B found A's room and joined; both see each other.
+  The peer-to-peer link did NOT come up (signaling dead 0x80550e18): this PC's router answers no UPnP (no IGD) and
+  two clients on one PC reach each other only through the router (NAT loopback). Not a verdict on play between
+  homes, which still needs a test with a second household.
+- shadPS4 reported a local address from a secondary network adapter without a gateway (not the LAN adapter); PCs
+  with several adapters (VPN tools) may advertise the wrong local address.
+- New players start in the tutorial dungeon (Lily, 3 floors) before Game Home; co-op needs it finished.
