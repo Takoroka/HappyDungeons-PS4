@@ -31,3 +31,7 @@ server-side services. No game files, firmware or user data are included; you nee
    the shadNet server to the Happy Dungeons server in Happy Dungeons' game-specific settings.
 
 Normal shadNet accounts are refused by the Happy Dungeons server; its accounts exist only for Happy Dungeons.
+
+## License
+
+MIT (see `LICENSE`), for everything in this repository. It holds no game files: Happy Dungeons belongs to its publisher, and you need your own copy. shadPS4 and shadNet are separate projects with their own licenses (shadPS4: GPL-2.0); this repository only patches the game in memory and talks to shadNet over its protocol.
