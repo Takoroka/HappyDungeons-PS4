@@ -21,6 +21,7 @@ server (experimentalserver.py) and a shadNet server, and adds, without changing 
      npid gets it, created if free or changed if it is already the player's account. It is never stored or logged
      here. Players' public shadNet passwords are never collected: a Happy Dungeons login is its own login, kept in a
      second shadPS4 user (one shadPS4 user has ONE login for all games).
+        POST /ps4/whoami   {"xuidBase", "secret"} -> {"ok", "linked", "npid"?, ...}  (the players page; makes nothing)
         GET  /ps4/account  a page doing the same in the browser (any OS): shows the shadNet login to enter in shadPS4
      A link creates (or reuses) a shadNet account with its own random password (never the player's Dungeons key).
   3. Friends: when a linked player signs in, their Dungeons friends who are linked too become shadNet friends
@@ -719,6 +720,32 @@ def keep_link(links, base, name, record, who, note=""):
     log("LINK %s <-> xuidBase %s (%s)%s" % (name, base, who.get("gamertag"), note))
 
 
+def verified_player(base, secret):
+    """The Dungeons server's whoami for a player key, or None if the key is not theirs."""
+    status, raw = dungeons("GET", "/windurango/identity/whoami", {"base": base, "secret": secret})
+    try:
+        who = json.loads(raw)
+    except ValueError:
+        return None
+    if status != 200 or who.get("verified") is not True or str(who.get("xuidBase")) != str(base):
+        return None
+    return who
+
+
+def link_status(base, secret):
+    """For the players page: this player's PS4 login, if any (makes nothing): (http status, answer)."""
+    who = verified_player(base, secret)
+    if who is None:
+        return 403, {"ok": False, "reason": "that is not a Happy Dungeons player key"}
+    with LINKS_LOCK:
+        links = load_links()
+    mine = sorted((v for v in links.values() if v["base"] == str(base)), key=lambda v: v.get("linked", ""),
+                  reverse=True)
+    if not mine:
+        return 200, {"ok": True, "linked": False, "gamertag": who.get("gamertag")}
+    return 200, dict(link_answer(mine[0], base, who), linked=True)
+
+
 def do_link(base, secret, wanted=None, own_password=None):
     """Link a verified Dungeons identity to a shadNet account: (http status, answer).
 
@@ -733,12 +760,8 @@ def do_link(base, secret, wanted=None, own_password=None):
         if not OWN_PASSWORD_MIN <= len(own_password) <= OWN_PASSWORD_MAX:
             return 400, {"ok": False, "reason": "passwords on this server are %d-%d characters"
                                                 % (OWN_PASSWORD_MIN, OWN_PASSWORD_MAX)}
-    status, raw = dungeons("GET", "/windurango/identity/whoami", {"base": base, "secret": secret})
-    try:
-        who = json.loads(raw)
-    except ValueError:
-        who = {}
-    if status != 200 or who.get("verified") is not True or str(who.get("xuidBase")) != str(base):
+    who = verified_player(base, secret)
+    if who is None:
         return 403, {"ok": False, "reason": "that is not a Happy Dungeons player key"}
     with LINKS_LOCK:
         links = load_links()
@@ -1076,6 +1099,9 @@ class Handler(BaseHTTPRequestHandler):
         npid = str(body.get("npid") or "").strip() or None
         own = body.get("password")
         own = str(own) if own not in (None, "") else None    # a player-chosen password (their own login)
+        if u.path == "/ps4/whoami":   # the players page: is this player linked yet? (makes nothing)
+            status, answer = link_status(str(body.get("xuidBase", "")), str(body.get("secret", "")))
+            return self.send(status, answer, headers={"Cache-Control": "no-store"})
         if u.path == "/ps4/link":
             status, answer = do_link(str(body.get("xuidBase", "")), str(body.get("secret", "")), npid, own)
             return self.send(status, answer, headers={"Cache-Control": "no-store"})

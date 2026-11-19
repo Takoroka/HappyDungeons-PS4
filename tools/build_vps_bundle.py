@@ -21,7 +21,8 @@ OUT = os.path.join(ROOT, "deploy", "hd-ps4-vps-bundle.tar.gz")
 SERVERDATA = r"%USERPROFILE%\OneDrive\Desktop\Happy Dungeons\Mount\ServerData"
 OVERRIDE_TOP = os.path.join(ROOT, "livecopy", "overrides", "Pic_Top01.jpg")
 TEXT = ["install.sh", "shadnet.cfg", "worlds.cfg", "clientversions.cfg", "gateway.json", "hd-ps4-shadnet.service",
-        "hd-ps4-gateway.service", "Caddyfile.ps4-site", "Caddyfile.ps4-route"]
+        "hd-ps4-gateway.service", "Caddyfile.ps4-site", "Caddyfile.ps4-route",
+        "players_page_ps4.py"]
 # what the gateway can deliver from the base set (DungeonPatch/JsonDiff are never sent to the PS4)
 BASE_NAMES = (["permission.pak", "presentation.pak", "shop_catalog.bin", "happy_card.pak", "EventExtra.pak",
                "EventCampaign.pak", "event_gacha.pak", "event_order.pak", "event_bonus.pak", "Dictionary.pak"]

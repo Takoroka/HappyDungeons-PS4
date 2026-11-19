@@ -7,11 +7,13 @@
 # The bundle (deploy\hd-ps4-vps-bundle.tar.gz, built by tools\build_vps_bundle.py) is copied to
 # /root/hd-ps4-bundle on the VPS and install.sh runs from there. Nothing else on the VPS is touched by this script.
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('check', 'fetch', 'setup', 'start', 'expose', 'status', 'rollback')]
+    [Parameter(Mandatory = $true)][ValidateSet('check', 'fetch', 'setup', 'start', 'expose', 'website', 'website-remove', 'status', 'rollback')]
     [string]$Step,
     [switch]$DryRun
 )
-$ErrorActionPreference = 'Stop'
+# Continue, not Stop: PowerShell 5.1 turns a native command's stderr (curl's progress, pip notes) into errors, and
+# Stop would abort the remote step half-way. Every native call's exit code is checked instead.
+$ErrorActionPreference = 'Continue'
 $Key = Join-Path $env:USERPROFILE '.ssh\happydungeons_vps'
 $Target = 'root@107.170.39.185'
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path

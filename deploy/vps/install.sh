@@ -9,12 +9,15 @@
 #   start     start shadNet, create the gateway's shadNet admin account, start the gateway, local checks
 #   expose    Caddy: PS4 blocks into /etc/caddy/Caddyfile (backup, validate, reload);
 #             ufw: 31313/tcp (gateway), 31314/udp (shadNet STUN), 31315/tcp (shadNet WebAPI)
+#   website   the PS4 box on the players page (/windurango/): /opt/happydungeons/server/web/index.html, with a
+#             backup next to it (players_page_ps4.py; static file, no restart). website-remove takes it out.
 #   status    services, ports, gateway status
 #   rollback  stop + disable the two services, take the Caddy blocks out, delete the three ufw rules
-#             (files, accounts and links stay in /opt/happydungeons/ps4)
+#             and the players page box (files, accounts and links stay in /opt/happydungeons/ps4)
 #
 # Every step can be run again and only changes what is not in place yet. --dry-run prints what it would do.
-# Never touched: the Dungeons server (/opt/happydungeons/server, data, venv, happydungeons.service) and
+# Never touched: the Dungeons server (/opt/happydungeons/server, data, venv, happydungeons.service; the one
+# exception is the "website" step's box on the players page web/index.html) and
 # kytyNET (8763/8764). Saves reach the Dungeons data only through its normal HTTP save route.
 #
 # NOTE: /opt/happydungeons/deploy/setup.sh rewrites the whole Caddyfile. After running it again, run
@@ -105,7 +108,11 @@ do_fetch() {
 		run rm -rf "$P/shadnet-unpack"
 		run python3 -m zipfile -e "$zip" "$P/shadnet-unpack"
 		if ((!DRY)); then
-			local bin
+			local bin tgz
+			# the release zip holds shadnet-linux64.tar.gz, which holds the binary
+			for tgz in "$P"/shadnet-unpack/*.tar.gz; do
+				[[ -f $tgz ]] && tar -xzf "$tgz" -C "$P/shadnet-unpack"
+			done
 			bin=$(find "$P/shadnet-unpack" -type f -name shadnet | head -1)
 			[[ -n $bin ]] || die "no shadnet binary in $zip"
 			install -m 0755 "$bin" "$P/shadnet/shadnet"
@@ -306,6 +313,14 @@ do_expose() {
 	fi
 }
 
+# ------------------------------------------------------------------------------------------------- website
+WEB_INDEX=/opt/happydungeons/server/web/index.html
+do_website() {
+	local args=("$WEB_INDEX" "$@")
+	((DRY)) && args+=(--dry-run)
+	python3 "$HERE/players_page_ps4.py" "${args[@]}"
+}
+
 # ------------------------------------------------------------------------------------------------- status
 do_status() {
 	local u
@@ -333,6 +348,7 @@ do_rollback() {
 	for port in "${UFW_PORTS[@]}"; do
 		ufw status | grep -qE "^$port " && run ufw delete allow "$port"
 	done
+	do_website --remove || true
 	echo "Rolled back. Files, shadNet accounts and links are still in $P."
 }
 
@@ -342,10 +358,12 @@ fetch) do_fetch ;;
 setup) do_setup ;;
 start) do_start ;;
 expose) do_expose ;;
+website) do_website ;;
+website-remove) do_website --remove ;;
 status) do_status ;;
 rollback) do_rollback ;;
 *)
-	sed -n '2,22p' "$0"
+	sed -n '2,25p' "$0"
 	exit 2
 	;;
 esac

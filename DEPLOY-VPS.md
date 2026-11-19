@@ -1,4 +1,4 @@
-# Happy Dungeons PS4 on the live friends server: deploy plan (awaiting approval)
+# Happy Dungeons PS4 on the live friends server: DEPLOYED 2026-11-19 (18:40-18:45 UTC)
 
 Nothing below has been done on the VPS yet. Everything was built and tested on this PC against a byte-identical
 copy of the live server (`experimentalserver.py` md5 86b36ea5…, the same file as /opt/happydungeons/server).
@@ -43,7 +43,24 @@ A PS4 player (shadPS4 + CUSA09120) plays on the same server as the Xbox/PC playe
 
 **Known gap:** event quest names show as text keys (`MissionName_Ev_Duel_Fire_00`). The 1.15 game has those strings built in; the 1.13 PS4 build doesn't. The fix is a PS4 dictionary pack with the missing strings (follow-up).
 
-## How it is pushed (prepared 2026-11-19, NOT run)
+## How it is pushed (run 2026-11-19 with the user's OK: check, fetch, setup, start, expose, website)
+
+**Live state after the push (all checked from outside):**
+- services hd-ps4-shadnet + hd-ps4-gateway active;
+- public: 31313/tcp (gateway), 31314/udp (STUN), 31315/tcp (WebAPI);
+- closed from outside: 31413, 31350, 5101;
+- Caddy: PS4 blocks in, backup `Caddyfile.before-ps4-20261119-*`;
+- players page: PS4 box in, backup `web/index.html.before-ps4-20261119-184356`;
+- the Dungeons server is untouched (md5 86b36ea5..., happydungeons.service active).
+
+**Smoke test:** a shadNet-only throwaway account (`HDSmokeTest`, no Dungeons player) signed in through
+107.170.39.185:31313 (code 0). A wrong password and an unknown id got 8. The account was deleted afterwards.
+The pages, `/ps4/whoami` and `/v12/api` (39 files) all answered.
+
+**Fixes found during the push:**
+- the release zip holds a tar.gz, which install.sh now unpacks;
+- push-vps.ps1 now uses ErrorActionPreference Continue, because PowerShell 5.1 turned curl's stderr into an
+  abort. The remaining steps were run over ssh from bash.
 
 Everything is scripted; one step at a time, each with a `-DryRun` first:
 
@@ -94,6 +111,19 @@ powershell -ExecutionPolicy Bypass -File deploy\push-vps.ps1 -Step expose    # C
 2. `setup`: user `hdps4`, folders, gateway, configs (random RegistrationSecretKey + admin password, the same in `shadnet.cfg` and `gateway.json`), `worlds.cfg`, base ServerData and the override, the two units (enabled, not started).
 3. `start`: start shadNet, create the `HDGateway` admin account with the key (`hd_ps4_gateway.py --create-admin`), restart shadNet once if the account is new (AdminsList), start the gateway. It then checks `http://127.0.0.1:5101/ps4/status` and the Vulcan list. Before any player links, the list is the base set; afterwards it is the live rev (73 today).
 4. `expose`: Caddy blocks + ufw ports, then `http://107.170.39.185/v12/api` from the VPS itself.
+4b. `website`: the "PS4 (shadPS4)" box on the players page (`/windurango/`), added by
+   `deploy\vps\players_page_ps4.py` to `/opt/happydungeons/server/web/index.html`.
+   - It is built and tested against the live file, md5 `d649e577…`.
+   - Exact anchors, marker `ps4_account_patch v1`, a `.before-ps4-<time>` backup, written in place.
+   - The file is static, so the Dungeons server doesn't restart.
+   - **What the box does:**
+     - shows the signed-in player's PS4 login (`POST /ps4/whoami`, which makes nothing);
+     - makes one, with a random password or a picked Happy Dungeons-only one;
+     - "Show" reveals a random password; "Pick a new password" changes it;
+     - says to put the login in a second shadPS4 user.
+   - `website-remove` (and `rollback`) takes it out. Removing it was tested to give back the original
+     byte-for-byte.
+   - Tested locally: the live page served by livecopy, with a one-origin test proxy standing in for Caddy.
 5. Players: `dist\HappyDungeonsPS4-<date>.zip` (see "Player package"). For your own profile on this PC: copy `deploy\client\HappyDungeons.xml` (URLs → `http://107.170.39.185`, save fix, NAT fix, select() fix) into the profile's patches instead of HappyDungeonsLocal, then run `tools\ps4_link.py --windurango <your winDurango.json>` and boot. Your real character, same save as PC.
 
 **Rollback:**
