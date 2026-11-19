@@ -8,7 +8,8 @@
 Sources: shadps4\\shadPS4.exe (unmodified sgdc3/shadPS4 a01cca9 build), shadps4\\user\\config.json and users.json
 (cleaned: no paths, devices or accounts from this PC), the save fix, NAT/countdown and select() patches from
 shadps4\\user\\patches\\HappyDungeonsLocal (REQUIRED_BLOCKS; the build stops if one is missing or an unknown one
-appears), the fps patch from shadps4\\user\\patches\\HappyDungeonsFps, and
+appears), the fps patch from shadps4\\user\\patches\\HappyDungeonsFps, the optional local-saves patch
+(tools\\make_localsave_patch.py, OFF; "Saves on this PC - on or off.bat" switches it), and
 dist-src\\ (README, scripts). The URL patch is generated for the chosen server. Never included: the game, firmware
 modules, keys, saves, logs, shader caches.
 Also writes deploy\\client\\HappyDungeons.xml (the same patch file as in the friends-server package).
@@ -24,6 +25,8 @@ import zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EMU = os.path.join(ROOT, "shadps4")
 SRC = os.path.join(ROOT, "dist-src")
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import make_localsave_patch  # noqa: E402  (optional local-saves patch, built from the game's eboot)
 GPL = r"C:\Program Files\Git\mingw64\share\licenses\xz\COPYING.GPLv2"
 SHADPS4_SOURCE = "https://github.com/sgdc3/shadPS4/tree/a01cca9c3e29a660d2a8aa7aaefe79b74c7f8b4e"
 SERVERS = {
@@ -142,11 +145,16 @@ def main():
     fps_dir = os.path.join(EMU, "user", "patches", "HappyDungeonsFps")
     for fname in ("HappyDungeons_fps.xml", "files.json"):
         write(os.path.join(user, "patches", "HappyDungeonsFps", fname), open(os.path.join(fps_dir, fname), encoding="utf-8").read())
+    # own folder: shadPS4 applies only the first patch file of a folder that lists the game
+    write(os.path.join(user, "patches", "HappyDungeonsSaves", "HappyDungeons_saves.xml"),
+          make_localsave_patch.patch_xml(enabled=False))
+    write(os.path.join(user, "patches", "HappyDungeonsSaves", "files.json"),
+          json.dumps({"HappyDungeons_saves.xml": ["CUSA09120"]}))
     write(os.path.join(user, "sys_modules", "PUT PS4 FIRMWARE MODULES HERE.txt"),
           "Copy these from your own PS4's firmware (system/common/lib), or leave this folder empty if you already\n"
           "have them in %APPDATA%\\shadPS4\\sys_modules:\n  libSceAudiodec.sprx libSceJpegDec.sprx libSceJson2.sprx\n"
           "  libSceLibcInternal.sprx libScePngDec.sprx libSceRtc.sprx\n", crlf=True)
-    for fname in ("setup.ps1", "play.ps1"):
+    for fname in ("setup.ps1", "play.ps1", "saves.ps1"):
         write(os.path.join(out, "tools", fname), open(os.path.join(SRC, "tools", fname), encoding="utf-8").read(), crlf=True)
     write(os.path.join(out, "tools", "server.json"),
           json.dumps({"linkApi": server["linkApi"], "shadnet": server["shadnet"], "webapi": server["webapi"]}, indent=1))
@@ -158,6 +166,9 @@ def main():
     write(os.path.join(out, "Setup Happy Dungeons.bat"),
           '@echo off\nrem First-time setup (game folder, your player). Run again to change something.\n'
           'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\\setup.ps1" %*\npause\n', crlf=True)
+    write(os.path.join(out, "Saves on this PC - on or off.bat"),
+          '@echo off\nrem Optional: keep your saves on this PC instead of the server (off unless you switch it on).\n'
+          'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\\saves.ps1" %*\npause\n', crlf=True)
     for fname, fps in launchers:
         write(os.path.join(out, fname),
               '@echo off\nrem Happy Dungeons at %d fps. Co-op works with players on different frame rates (30 to 240 fps).\n'

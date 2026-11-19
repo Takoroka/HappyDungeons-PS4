@@ -30,7 +30,8 @@ SERVERS = {
               "link": "http://127.0.0.1:5100"},
 }
 FPS_XML = os.path.join(ROOT, "shadps4", "user", "patches", "HappyDungeonsFps", "HappyDungeons_fps.xml")
-SAVES_XML = os.path.join(ROOT, "runs", "saves_local.xml")   # tools/make_localsave_patch.py output, when present
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import make_localsave_patch  # noqa: E402  (optional local-saves patch, built from the game's eboot, off by default)
 
 SRC = os.path.join(ROOT, "dist-src", "patch-pack")   # INSTALL.txt, happydungeons_account.py
 
@@ -48,27 +49,24 @@ def main():
     # ONE patch file: shadPS4 applies only the first file in a patch folder whose files.json entry lists the game
     # (common/memory_patcher.cpp: "break;" after the first match), so the fps and saves patches must be in the same
     # file as the server redirect, or they are silently skipped (the launcher still lists and ticks them).
-    sources = [s["xml"], FPS_XML]
-    saves_note = ""
-    if os.path.exists(SAVES_XML):
-        sources.append(SAVES_XML)
-        saves_note = (
-            "  (in HappyDungeons.xml)                   OPTIONAL, off by default: \"Saves: keep them on this PC\" keeps\n"
-            "                                           your saves on this PC instead of the server (tick it in Cheats /\n"
-            "                                           Patches). Your character is then no longer shared with the PC\n"
-            "                                           version or other computers, and the server does not keep it.\n"
-            "                                           The save files are hds_*.bin / .bak in the shadPS4 folder >\n"
-            "                                           download > CUSA09120; copy them to back up.\n")
+    sources = [open(p, encoding="utf-8").read() for p in (s["xml"], FPS_XML)]
+    sources.append(make_localsave_patch.patch_xml(enabled=False))
+    saves_note = (
+        "  (in HappyDungeons.xml)                   OPTIONAL, off by default: \"Saves: keep them on this PC\" keeps\n"
+        "                                           your saves on this PC instead of the server (tick it in Cheats /\n"
+        "                                           Patches). Your character is then no longer shared with the PC\n"
+        "                                           version or other computers, and the server does not keep it.\n"
+        "                                           The save files are hds_*.bin / .bak in the shadPS4 folder >\n"
+        "                                           download > CUSA09120; copy them to back up.\n")
     head, blocks = None, []
-    for src in sources:
-        data = open(src, encoding="utf-8").read()
-        assert "CUSA09120" in data and 'AppVer="01.11"' in data, src
+    for data in sources:
+        assert "CUSA09120" in data and 'AppVer="01.11"' in data
         start, end = data.index("</TitleID>") + len("</TitleID>"), data.rindex("</Patch>")
         if head is None:
             head = data[:start]
         blocks.append(data[start:end].strip("\n"))
     merged = head + "\n" + "\n".join(blocks) + "\n</Patch>\n"
-    assert merged.count("<Metadata") == sum(open(p, encoding="utf-8").read().count("<Metadata") for p in sources)
+    assert merged.count("<Metadata") == sum(data.count("<Metadata") for data in sources)
     files = {"HappyDungeons.xml": merged}
     with open(os.path.join(pack, "HappyDungeons.xml"), "w", encoding="utf-8", newline="\n") as f:
         f.write(merged)

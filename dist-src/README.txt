@@ -44,6 +44,19 @@ Controls: a game controller works directly. shadPS4's keyboard layout is in shad
 Don't play the same character on PC and PS4 at the same time: both save to the same place, the last one wins.
 
 
+SAVES ON THIS PC (OPTIONAL, OFF)
+--------------------------------
+Normally your character is saved on the Happy Dungeons server, shared with the PC version. If you would rather keep
+it on this PC, double-click "Saves on this PC - on or off.bat": it shows whether this is on or off and switches it.
+When it is ON:
+  * the game saves to files in shadPS4\user\download\CUSA09120 (hds_*.bin and hds_*.bak); back them up yourself,
+    the server keeps no copy;
+  * that character is not shared with the PC version or your other computers;
+  * the first time, the game starts with a new character; your server character stays on the server, unchanged,
+    and comes back when you switch this off;
+  * online play (co-op, friends, events, shop) still uses the server.
+
+
 CO-OP CONNECTIONS
 -----------------
 PS4 co-op connects players' PCs directly (peer to peer) on UDP port 3658.
@@ -65,7 +78,7 @@ TROUBLESHOOTING
   * Network error in the lobby: check the firewall/router notes above.
   * Logs for a bug report: shadPS4\user\log\shad_log.txt.
   * To start over: delete settings.json and run setup again (your player and saves stay on the server; keep
-    happydungeons_identity.json).
+    happydungeons_identity.json). With saves on this PC switched on, keep shadPS4\user\download too.
 
 
 WHAT IS IN HERE
@@ -78,5 +91,8 @@ WHAT IS IN HERE
                               socket (otherwise it never sends co-op data and other players never appear)
                             - HappyDungeonsFps: game speed follows real time at any frame rate; 30 fps cap lifted;
                               online co-op runs on a shared 60 Hz tick so players on different frame rates stay in sync
-  tools\setup.ps1, tools\play.ps1, tools\server.json   setup and start scripts, server addresses
+                            - HappyDungeonsSaves: optional, OFF unless you switch it on: saves go to files on this PC
+                              instead of the server
+  tools\setup.ps1, tools\play.ps1, tools\saves.ps1, tools\server.json   setup, start and saves-switch scripts,
+                          server addresses
 Nothing outside this folder is changed (except Windows' own firewall entry for shadPS4 if you allow it).

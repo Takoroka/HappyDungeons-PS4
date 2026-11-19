@@ -209,14 +209,20 @@ def build():
 
 def main():
     enabled = "--enabled" in sys.argv
+    sys.stdout.write(patch_xml(enabled, show=True))
+
+
+def patch_xml(enabled=False, show=False):
+    """The patch file as text (used by tools/build_patch_pack.py and tools/build_player_package.py)."""
     d = open(EBOOT, "rb").read()
     text = d[0x4000:0x4000 + 0x27ADA08]
     code, entry = build()
     assert CAVE + len(code) <= 0x27B0000
-    from capstone import CS_ARCH_X86, CS_MODE_64, Cs
-    md = Cs(CS_ARCH_X86, CS_MODE_64)
-    for i in md.disasm(code, CAVE):
-        print("  %08x: %-24s %-8s %s" % (i.address, i.bytes.hex(), i.mnemonic, i.op_str), file=sys.stderr)
+    if show:
+        from capstone import CS_ARCH_X86, CS_MODE_64, Cs
+        md = Cs(CS_ARCH_X86, CS_MODE_64)
+        for i in md.disasm(code, CAVE):
+            print("  %08x: %-24s %-8s %s" % (i.address, i.bytes.hex(), i.mnemonic, i.op_str), file=sys.stderr)
     hexpat = lambda b: " ".join("%02X" % x for x in b)
     lines = ['            <Line Type="bytes" Address="0x%08x" Value="%s"/>' % (CAVE + 0x400000, code.hex())]
     for site, stub, kind in SITES:
@@ -228,7 +234,7 @@ def main():
         call = b"\xE8" + struct.pack("<i", entry[kind] - (site + 5))
         lines.append("            <!-- eboot %#x: call %s -> local file cave -->" % (site, {"get": "sceNpTusGetDataA", "set": "sceNpTusSetDataA", "del": "sceNpTusDeleteMultiSlotDataA"}[kind]))
         lines.append('            <Line Type="mask" Address="%s" Value="%s" Offset="%d"/>' % (hexpat(text[site - back:site + 10]), call.hex(), back))
-    sys.stdout.write('''<?xml version="1.0"?>
+    return ('''<?xml version="1.0"?>
 <Patch>
     <TitleID>
         <ID>CUSA09120</ID>

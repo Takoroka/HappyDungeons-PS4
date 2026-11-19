@@ -193,8 +193,10 @@ Alternatives if you'd rather not download a binary:
 - Per-game settings work: custom_configs/CUSA09120.json overrides Network.shadnet_server and GPU.vblank_frequency
   for Happy Dungeons only (the file must be a FULL config copy; a partial file crashed the pre-release at start).
 - Patch pack for any shadPS4 (Windows/macOS/Linux): `tools\build_patch_pack.py [--server vps|local]` ->
-  dist\HappyDungeons-patches[-local]\HappyDungeons (HappyDungeons.xml, HappyDungeons_fps.xml,
-  HappyDungeons_saves.xml, files.json) + INSTALL.txt, zipped.
+  dist\HappyDungeons-patches[-local]\HappyDungeons (ONE merged HappyDungeons.xml: shadPS4 applies only the first
+  file per patch folder; files.json) + INSTALL.txt, zipped. The Windows package keeps three folders (HappyDungeons,
+  HappyDungeonsFps, HappyDungeonsSaves; saves OFF) and "Saves on this PC - on or off.bat" (tools\saves.ps1) flips
+  the saves patch's isEnabled.
 - Optional local saves (`tools\make_localsave_patch.py`, off by default): the five TUS calls (GetDataA x3, SetDataA,
   DeleteMultiSlotDataA) go to file caves at 0x27af600; files /download0/hds_<account>_<slot>.bin/.bak
   (= user/download/CUSA09120). Verified: loads a seeded save, saves back (no server writes), reloads its own save,
