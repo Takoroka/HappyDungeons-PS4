@@ -47,3 +47,6 @@ __pycache__/
 /dungeons-server/**/*.before-*
 /dungeons-server/**/*.pak
 /dungeons-server/**/discord_app_id.txt
+
+# paths on this PC (tools/build_vps_bundle.py): never in git
+/tools/local_paths.json

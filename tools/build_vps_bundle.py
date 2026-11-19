@@ -11,6 +11,7 @@ Text files go in with LF line endings. Nothing is uploaded by this script.
 """
 import hashlib
 import io
+import json
 import os
 import sys
 import tarfile
@@ -18,7 +19,20 @@ import tarfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VPS = os.path.join(ROOT, "deploy", "vps")
 OUT = os.path.join(ROOT, "deploy", "hd-ps4-vps-bundle.tar.gz")
-SERVERDATA = r"%USERPROFILE%\OneDrive\Desktop\Happy Dungeons\Mount\ServerData"
+# The Xbox client's ServerData folder (inside the game's Mount folder): from HD_SERVERDATA, or "serverData" in
+# tools/local_paths.json (not in git: it is a path on your own PC).
+def _serverdata():
+    if os.environ.get("HD_SERVERDATA"):
+        return os.environ["HD_SERVERDATA"]
+    local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "local_paths.json")
+    try:
+        with open(local, encoding="utf-8") as f:
+            return json.load(f)["serverData"]
+    except (OSError, ValueError, KeyError):
+        sys.exit('Set HD_SERVERDATA, or put {"serverData": "C:/path/to/Mount/ServerData"} in %s' % local)
+
+
+SERVERDATA = _serverdata()
 OVERRIDE_TOP = os.path.join(ROOT, "livecopy", "overrides", "Pic_Top01.jpg")
 TEXT = ["install.sh", "shadnet.cfg", "worlds.cfg", "clientversions.cfg", "gateway.json", "hd-ps4-shadnet.service",
         "hd-ps4-gateway.service", "Caddyfile.ps4-site", "Caddyfile.ps4-route",
