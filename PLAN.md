@@ -200,3 +200,17 @@ Alternatives if you'd rather not download a binary:
   (= user/download/CUSA09120). Verified: loads a seeded save, saves back (no server writes), reloads its own save,
   fresh start = new player. The PS4 savedata folder (home/<user>/savedata) is not reachable: the game never imports
   libSceSaveData and a patch cannot add imports or create folders (no mkdir import).
+
+## Open: bombs freeze in mid-air above 60 fps (solo, variable rate) - parked
+
+- Reported at 240 fps; bombs work at 30 and 60 fps (online co-op runs at 60 Hz, so it is fine there).
+- Likely cause: bouncing bullets (`behaviorType_` "BoundStraight", type 4) keep `dampingRate_` of their speed per
+  bounce and stop when slower than `thresholdVelocity_` (0.05-0.6), tuned per 30 fps frame. With smaller steps a bomb
+  touching a wall/stake reads as "slow enough" and stops where it is. Bullet data: AriesDataOrbis/dungeon/json/bullet/
+  bulletParam.json (ZRES = 8-byte header + zlib). Users: player action PAC_00010_5thDemension_01 (bullet
+  PA_5thDemension_Bomb, every class), Item_Bomb (tool), HWJack (Halloween event enemy), grenades, P_Banana.
+- Code so far: BoundStraight parameter parser 0xa9f3f0 (vtable 0x2809768); in each bullet definition the block is at
+  +0xe0 (damping +0xe8, threshold +0xec; constructor 0xa9ea00). The compare against the threshold is not found yet
+  (no direct compare with [reg+0xec]; likely loaded into a register or squared). Next: throw that bomb on a test
+  client and catch the bounce code with a read watchpoint on the bullet's threshold (tools/hwwatch.py, RW=11).
+

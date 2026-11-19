@@ -1,5 +1,5 @@
-"""Sets the password of a shadNet account on the LOCAL Happy Dungeons server (this PC), e.g. to match the password
-the same name uses on the public shadNet, so one shadPS4 login works for every game.
+"""Sets a new password for a Happy Dungeons account on the LOCAL Happy Dungeons server (this PC; admin/test use).
+Happy Dungeons accounts are their own: never use your normal (public) shadNet password here.
 
   py -3 tools\\set_shadnet_password.py MyPlayer
 
@@ -7,10 +7,9 @@ You type the new password yourself (hidden, twice); it is never shown or logged.
   1. asks shadNet's admin API (127.0.0.1:31350, the gateway's admin account from livecopy\\gateway.json) to set it
      (shadNet hashes it itself),
   2. checks a real shadNet sign-in with it (127.0.0.1:31413),
-  3. updates the copies that must match: the portable shadPS4 profile's users.json (used by the "Play Happy
-     Dungeons (PS4)" .bat launchers) and the gateway's link record, if the account is linked.
-Note: shadNet's game sign-in is not encrypted (also on the public shadNet), so the password reaches every server
-this account signs in to.
+  3. updates the portable shadPS4 profile's users.json (used by the "Play Happy Dungeons (PS4)" .bat launchers)
+     and makes sure the gateway's link record keeps no password.
+Note: shadNet's game sign-in is not encrypted, so the password reaches the server this account signs in to.
 Options: --profile <folder> (default shadps4), --password-file <file> (tests only)."""
 import getpass
 import json
@@ -147,14 +146,13 @@ def main():
     if os.path.exists(links):
         data = json.load(open(links, encoding="utf-8"))
         link = data.get(npid.lower())
-        if link:
-            link["password"] = password
+        if link and link.pop("password", None) is not None:   # the gateway keeps no passwords
             tmp = links + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=1, sort_keys=True)
             os.replace(tmp, links)
-        print("gateway link record: %s." % ("updated" if link else "not linked (nothing to update)"))
-    print("Done. Sign in with this password in shadPS4 (and on the public shadNet if it is the same).")
+        print("gateway link record: %s." % ("linked (keeps no password)" if link else "not linked"))
+    print("Done. Sign in with this password in shadPS4, in a shadPS4 user used only for Happy Dungeons.")
 
 
 if __name__ == "__main__":
