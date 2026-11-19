@@ -1,0 +1,14 @@
+[Unit]
+Description=Happy Dungeons PS4 gateway (saves, events, accounts for the PS4 build)
+After=network-online.target happydungeons.service hd-ps4-shadnet.service
+Wants=hd-ps4-shadnet.service
+
+[Service]
+User=hdps4
+WorkingDirectory=/opt/happydungeons/ps4/gateway
+ExecStart=/usr/bin/python3 -u /opt/happydungeons/ps4/gateway/hd_ps4_gateway.py /opt/happydungeons/ps4/gateway/gateway.json
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<Patch>
+    <TitleID>
+        <ID>CUSA09120</ID>
+    </TitleID>
+    <Metadata Title="Happy Dungeons" Name="Decouple gameplay from frame rate (real time everywhere)" Author="local" Note="Every game timing follows real time at any frame rate: real delta time into the engine timer, the engine fps setting follows the measured frame rate (fixes ~100 seconds-to-frames conversions), the integer 1/60 s clock and the fps==60 special case count real time, and the rapid stab mash window is 467 ms at any fps. Online co-op is input lockstep, so there every player runs the same fixed 60 Hz tick (each step exactly 1/60 s; faster PCs pace their frames to it, slower ones such as 30 fps run several steps per frame) and players on any frame rate stay in sync. Built by tools\make_fps_patch.py. Caves at eboot 0x27af100 / 0x27af000, state at 0x5d36000." PatchVer="3.2" AppVer="01.11" AppElf="eboot.bin" isEnabled="true">
+        <PatchList>
+            <Line Type="bytes" Address="0x02baf100" Value="4883ec08e8e90200004883c408488d0dec6e5803488b11488901c4c17a1047244885d20f8477010000803d73811300000f840d000000833deb5efa02000f857301000048c7412800000000c74130000000004829d0483d40420f000f8d05000000b840420f00483d00e1f5050f8e05000000b800e1f5054889c64803410831d241b82b50fe0049f7f0488951088941184889f04803411031d241b855a0fc0149f7f04889511089411cc4e1f22acec5f2590d66020000c5fa105120c5e057dbc5f82ed30f8508000000c5fa10154f020000c5ea58dac5f25de3c5fa102d47020000c5f82ecb0f8608000000c5fa102d39020000c5da5ce2c5da59e5c5ea58d4c5fa115120c5fa101d18020000c5e25edac5ca2a3518bb1300c5e25cfec5ca5cf3c5c25ffec5f82e3d040200000f8238000000c5fa2dc383f80a0f8d05000000b80a0000003de80300000f8e05000000b8e80300008905d6ba1300c5e22ad8c5fa111dceba1300418947148b05c0ba1300c1e01031d241b81e00000041f7f0894124418b571885d20f8412000000c4c17a114f18c4c172594720c4c17a114724c3c7411802000000c7411c01000000c7412400000100c3488b51284885d20f84880000004889c64829d64881fe5081f2070f8f750000004881feac5f03fe0f8c680000004881fec0bdf0ff0f8d6000000048f7de4881fe80841e000f8c23000000488d86a01ce9ff31d241b8e803000049f7f089c74883ec08e833245fff4883c408eb02f3904883ec08e8c40000004883c408488d0dc76c5803488b51284889c64829d60f88a7ffffffeb054889c231f64989c14989d2488d8640420f0031d241b82a50fe0049f7f0ffc083f8040f8605000000b8040000008941344869c02a50fe004901c24c8951284c8909c7413001000000c7411801000000c7411c00000000c7412400000200c741208988883cc70577b913003c000000c70571b913000000704241c747143c000000418b571885d20f841a000000c5fa100d39000000c4c17a114f18c4c172594720c4c17a114724c34883ec18bf040000004889e6e8ad2b5fff4869042400ca9a3b48034424084883c418c3cccccc8988883c5f7089308988083d0000803f0000003e0000803b0000403f"/>
+            <Line Type="bytes" Address="0x02baf000" Value="833d29705803000f851c0000008b0d09705803d3e0410fb68efc030000d1e983e10109c841894774c38b0dd15ffa02f7c1010000000f94c10fb6c9e9d3ffffff"/>
+            <Line Type="bytes" Address="0x02baf040" Value="833de96f58030074068b35e56f5803e97c7829fe"/>
+            <Line Type="bytes" Address="0x02baf080" Value="534889fbe8777829fe833da06f5803000f84470000008b43043b43080f833b0000004889dfbe3c000000e8917829fe488d3d4a50fa02488b07ff50108805b2291d018805c05643030fb6f0488d3d2e50fa02e8b9b74afe89059b291d015bc3"/>
+            <!-- eboot 0xa4b563: BeginSteps(timer, n) -> online: n = ticks due this frame (2 at 30 fps) -->
+            <Line Type="mask" Address="4C 89 FF 44 89 F6 41 83 E4 01 E8 68 B3 FF FF 41 8B 47 04 48" Value="e8d83ad601" Offset="10"/>
+            <!-- eboot 0xa4be09: NextStep(timer) -> online: before another step, redo the lockstep input check -->
+            <Line Type="mask" Address="48 8D 1D 4A AC EF 02 4C 89 FF E8 F2 AA FF FF 41 8B 47 04 48" Value="e87232d601" Offset="10"/>
+            <!-- eboot 0xa4a71e: vmovss xmm0,[r15+0x24] -> call frame cave; nop -->
+            <Line Type="mask" Address="FF E8 22 C2 FF FF C4 C1 7A 10 47 24 44 8B A3 A8 00 00" Value="e8dd49d60190" Offset="6"/>
+            <!-- eboot 0x10785c: max(60/fps,1) -> mov eax,[U60] -->
+            <Line Type="mask" Address="FC F7 03 00 85 F6 7E 24 48 8D 3D CD 34 7E 02 B8 3C 00 00 00 31 D2 F7 3F 85 C0 41 0F 4E C4" Value="8b05b6e7c20590909090909090909090909090909090" Offset="8"/>
+            <!-- eboot 0xa60a1f: fps==60 ? x*2 : x  ->  x*fps/30 -->
+            <Line Type="mask" Address="FF 48 89 85 20 FF FF FF 74 4D 48 8D 15 0A A3 E8 01 8B 88 88 01 00 00 83 3A 3C 75 2C 01 C9 44 89 C0 81 E1 FE 01 00 00 66 41 89 8C 42 08 02 00 00 EB 25" Value="0fb688880100000faf0df7552d05c1e9104489c06641898c4208020000eb2e" Offset="10"/>
+            <!-- eboot 0x452e56: history = history*2 | press -> call stab cave (shift by real 1/30 s ticks) -->
+            <Line Type="mask" Address="41 C7 47 7C 0E 00 00 00 41 8A 8E FC 03 00 00 D0 E9 80 E1 01 0F B6 C9 8D 04 41 41 89 47 74" Value="e8a5c135029090909090909090909090909090909090" Offset="8"/>
+        </PatchList>
+    </Metadata>
+    <Metadata Title="Happy Dungeons" Name="Frame rate: lift the 30 fps cap (flip every vblank)" Author="local" Note="sceVideoOutSetFlipRate(handle, 1) -> 0 at eboot 0x4529a. The game renders every second vblank, so the frame rate becomes half of shadPS4's vblank_frequency (120 -> 60 fps, 240 -> 120 fps). Use together with the decouple patch." PatchVer="1.0" AppVer="01.11" AppElf="eboot.bin" isEnabled="true">
+        <PatchList>
+            <Line Type="mask" Address="41 C7 85 A0 01 00 00 01 00 00 00 BE 01 00 00 00 41 8B BD 28 01" Value="be00000000" Offset="11"/>
+        </PatchList>
+    </Metadata>
+</Patch>

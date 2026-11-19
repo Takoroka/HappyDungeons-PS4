@@ -1,0 +1,9 @@
+http://107.170.39.185 {
+	@ps4 path /v12/api /v12/api/* /vulcan/* /api/TelemetryEntity /api/TelemetryEntity/* /law /law/* /avatar/*
+	handle @ps4 {
+		reverse_proxy 127.0.0.1:5101
+	}
+	handle {
+		respond 404
+	}
+}

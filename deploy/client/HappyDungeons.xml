@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<Patch>
+    <TitleID>
+        <ID>CUSA09120</ID>
+    </TitleID>
+    <Metadata Title="Happy Dungeons" Name="Server: redirect Toylogic hosts to 107.170.39.185" Author="local" Note="Points the game's hard-coded Toylogic URLs (Vulcan delivery API, telemetry, Lynca dev API, legal page) at the Happy Dungeons server so it never contacts Toylogic's hosts. PSN features go through shadNet." PatchVer="1.0" AppVer="01.11" AppElf="eboot.bin" isEnabled="true">
+        <PatchList>
+            <!-- Vulcan delivery API (event/shop data): https://xas-pfpf.lynca.net/v12/api -> http://107.170.39.185/v12/api -->
+            <Line Type="mask" Address="68 74 74 70 73 3A 2F 2F 78 61 73 2D 70 66 70 66 2E 6C 79 6E 63 61 2E 6E 65 74 2F 76 31 32 2F 61 70 69 00" Value="687474703a2f2f3130372e3137302e33392e3138352f7631322f617069000000000000" Offset="0"/>
+            <!-- Telemetry: https://telemetry.happywars.net/ -> http://107.170.39.185/ -->
+            <Line Type="mask" Address="68 74 74 70 73 3A 2F 2F 74 65 6C 65 6D 65 74 72 79 2E 68 61 70 70 79 77 61 72 73 2E 6E 65 74 2F 00" Value="687474703a2f2f3130372e3137302e33392e3138352f0000000000000000000000" Offset="0"/>
+            <!-- Lynca dev API: https://dev-api.lynca.net/ -> http://107.170.39.185/ -->
+            <Line Type="mask" Address="68 74 74 70 73 3A 2F 2F 64 65 76 2D 61 70 69 2E 6C 79 6E 63 61 2E 6E 65 74 2F 00" Value="687474703a2f2f3130372e3137302e33392e3138352f0000000000" Offset="0"/>
+            <!-- Legal page link: https://jp.happydungeons.net/law/ -> http://107.170.39.185/law/ -->
+            <Line Type="mask" Address="68 74 74 70 73 3A 2F 2F 6A 70 2E 68 61 70 70 79 64 75 6E 67 65 6F 6E 73 2E 6E 65 74 2F 6C 61 77 2F 00" Value="687474703a2f2f3130372e3137302e33392e3138352f6c61772f0000000000000000" Offset="0"/>
+        </PatchList>
+    </Metadata>
+    <Metadata Title="Happy Dungeons" Name="Saves: empty cloud slot means &quot;no save yet&quot;, not &quot;corrupt&quot;" Author="local" Note="The game's save loader (eboot 0x9db590) only treats sceNpTusGetDataA error 0x8055084A (user storage data not found) as 'no saved game'. shadNet answers an unset TUS slot with success and 0 bytes, so a fresh account got 'The saved game is corrupt'. This makes a 0-byte read take the not-found path (result 4) like real PSN; other errors still give result 2." PatchVer="1.0" AppVer="01.11" AppElf="eboot.bin" isEnabled="true">
+        <PatchList>
+            <!-- 0x9db652: js -> jle (0-byte read goes to the error/not-found block) -->
+            <Line Type="mask" Address="E8 C0 6E 3C 01 85 DB 78 1D 48 8B 8D B8 FD FF FF" Value="85db7e1d" Offset="5"/>
+            <!-- 0x9db671: error block: store code; 0 or 0x8055084A -> 4 (no save); else jump to cave -> 2 -->
+            <Line Type="mask" Address="48 8D 05 E0 1C D8 04 89 18 31 C0 81 FB 4A 08 55 80 0F 94 C0 8D 5C 00 02" Value="488d05e01cd804891885db740881fb4a085580752f6a045b" Offset="0"/>
+            <!-- 0x9db6b5 (padding): push 2; pop rbx; jmp 0x9db689 -->
+            <Line Type="mask" Address="E8 F4 5C 3C 01 90 90 90 90 E9 5B 6E 3C 01 90 90 90 90 90 90 90 90 90 90 90" Value="6a025bebcf" Offset="14"/>
+        </PatchList>
+    </Metadata>
+    <Metadata Title="Happy Dungeons" Name="Network: treat the NAT check as done (lobby countdown stuck at 29)" Author="local" Note="shadPS4 always answers sceNetCtlGetNatInfo with STUN status 0 (not checked) and NAT type 0, so the game's NAT state machine (eboot 0x8754e0) retries every frame, its network manager never becomes ready, and the lobby countdown freezes at 29 before failing with a network error. This reports STUN OK / NAT type 2 (moderate) when the emulator leaves them at 0. Caves at eboot 0x27ae200 and 0x27ae280." PatchVer="1.0" AppVer="01.11" AppElf="eboot.bin" isEnabled="true">
+        <PatchList>
+            <Line Type="bytes" Address="0x02bae200" Value="4183bfdc02000000750b41c787dc020000020000004183bfe002000000750b41c787e002000002000000c3"/>
+            <Line Type="bytes" Address="0x02bae280" Value="b80200000085c978098b55e885d2740289d0c3"/>
+            <!-- eboot 0x8757e5: cmp [r15+0x2dc],0; je retry -> call cave_nat; nop x5 -->
+            <Line Type="mask" Address="EF C7 52 01 85 C0 75 4A 41 83 BF DC 02 00 00 00 74 40 49 8D BF E8" Value="e8168af3019090909090" Offset="8"/>
+            <!-- eboot 0x8bb6ca: test ecx,ecx; cmovns eax,[rbp-0x18] -> call cave_type; nop -->
+            <Line Type="mask" Address="00 E8 0A 69 4E 01 89 C1 31 C0 85 C9 0F 49 45 E8 48 8B 0B 48" Value="e8b12bef0190" Offset="10"/>
+        </PatchList>
+    </Metadata>
+    <Metadata Title="Happy Dungeons" Name="Network: select() checks the game's socket (online co-op)" Author="local" Note="The game calls select() with nfds = 0, which the PS4 ignores but shadPS4 honours, so its peer-to-peer socket never looks writable and the game never sends anything to other players (lobby shows them without a character, then 'continuous communication cannot be maintained'). This passes nfds = fd + 1. eboot 0x8efd37, cave 0x27ae300." PatchVer="1.0" AppVer="01.11" AppElf="eboot.bin" isEnabled="true">
+        <PatchList>
+            <Line Type="bytes" Address="0x02bae300" Value="418b3effc74883ec08e8d23e5fff4883c408c3"/>
+            <!-- eboot 0x8efd37: xor edi,edi; call select -> call cave_select; nop x2 -->
+            <Line Type="mask" Address="0F 44 D4 4D 85 FF 49 0F 44 CF 31 FF E8 A2 24 4B 01 85 C0 78 73 41" Value="e8c4e5eb019090" Offset="10"/>
+        </PatchList>
+    </Metadata>
+</Patch>

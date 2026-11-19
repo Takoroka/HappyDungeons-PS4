@@ -1,0 +1,4 @@
+	@ps4link path /ps4/*
+	handle @ps4link {
+		reverse_proxy 127.0.0.1:5101
+	}

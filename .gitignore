@@ -1,0 +1,40 @@
+# Allow-list: only source, scripts, docs and the game patches are tracked.
+# Never commit: emulator profiles (keys.json, users.json, saves), shadNet's database, the live-server copy,
+# run logs/screenshots/memory dumps, build outputs or anything from the game itself.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/PLAN.md
+!/INVENTORY.md
+!/DELIVERY.md
+!/DEPLOY-VPS.md
+!/Play Happy Dungeons (PS4)*.bat
+!/tools/
+!/server/
+!/deploy/
+!/dist-src/
+!/shadps4/
+
+# server: code only (no data, logs)
+/server/*
+!/server/*.py
+
+# deploy: scripts and templates, not the built bundle
+/deploy/*.tar.gz
+
+# the main profile: only the two game-patch folders
+/shadps4/*
+!/shadps4/user/
+/shadps4/user/*
+!/shadps4/user/patches/
+/shadps4/user/patches/*
+!/shadps4/user/patches/HappyDungeonsLocal/
+!/shadps4/user/patches/HappyDungeonsFps/
+
+__pycache__/
+*.pyc
+*.log
+*.db
+*.tar.gz
+*.zip

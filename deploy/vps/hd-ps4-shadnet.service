@@ -1,0 +1,15 @@
+[Unit]
+Description=Happy Dungeons PS4 - shadNet (PSN replacement, behind the gateway)
+After=network-online.target
+
+[Service]
+User=hdps4
+WorkingDirectory=/opt/happydungeons/ps4/shadnet
+Environment=LD_LIBRARY_PATH=/opt/happydungeons/ps4/qt/lib
+Environment=QT_PLUGIN_PATH=/opt/happydungeons/ps4/qt/plugins
+ExecStart=/opt/happydungeons/ps4/shadnet/shadnet
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

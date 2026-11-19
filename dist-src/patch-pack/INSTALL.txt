@@ -1,0 +1,112 @@
+HAPPY DUNGEONS (PS4) ON SHADPS4 - FOR THE HAPPY DUNGEONS FRIENDS SERVER
+=======================================================================
+
+Play the PS4 version of Happy Dungeons in a normal shadPS4 (Windows, macOS or Linux) on the Happy Dungeons friends
+server. Your account, friends, saves, events and shop are the same as in the PC (WinDurango) version. Co-op
+matchmaking is between PS4 players only.
+
+You need:
+  * shadPS4 with shadNet: the official v0.21 pre-release or newer (in the launcher: the "Pre-release" build).
+    v0.18 and older lack part of the online code.
+  * Your own decrypted Happy Dungeons, European release CUSA09120, version 01.11, added to shadPS4.
+  * The firmware modules it needs, from your own console, in the sys_modules folder of the shadPS4 folder:
+      libSceAudiodec.sprx  libSceJpegDec.sprx  libSceJson2.sprx  libSceLibcInternal.sprx
+      libScePngDec.sprx    libSceRtc.sprx
+
+shadPS4 itself is not changed: the patches only change the game in memory while it runs.
+
+The "shadPS4 folder" below is:
+  Windows  %APPDATA%\shadPS4
+  Linux    ~/.local/share/shadPS4   ($XDG_DATA_HOME/shadPS4 if XDG_DATA_HOME is set)
+  macOS    ~/Library/Application Support/shadPS4
+  (a portable shadPS4 with a "user" folder next to it uses that "user" folder)
+
+
+1. PATCHES
+   Copy the folder "HappyDungeons" from this pack into the "patches" folder in the shadPS4 folder.
+   In the launcher, right-click Happy Dungeons > Cheats / Patches > Patches: they are listed there. Leave them
+   ticked (except HappyDungeons_saves, which is optional and off, see FILES).
+
+2. YOUR HAPPY DUNGEONS LOGIN
+   Happy Dungeons has its OWN shadNet login on the friends server. It is never your public shadNet login: the
+   friends server never asks for your public shadNet password, and you should never give it.
+   Get the login, made together with your Happy Dungeons player (your character, saves and friends, shared with
+   the PC version):
+     * in a web browser: __ACCOUNT_PAGE__
+       Choose who you are, then "Make one for me" (random password) or pick an Account ID and a NEW password used
+       only for Happy Dungeons.
+     * with Python 3 (python.org; on Windows type "py" instead of "python3"), in this folder:
+         python3 happydungeons_account.py new "Your Name"                     you are new
+         python3 happydungeons_account.py pc path/to/winDurango.json          you play Happy Dungeons on PC
+         python3 happydungeons_account.py key path/to/happydungeons_identity.json   a player you made before
+       Add --pick-login to choose the Account ID (--npid NAME) and a new Happy Dungeons-only password yourself.
+   PC players: winDurango.json is in your PC game's Mount\UserData\LocalState\WinDurango folder. It is the same
+   player, character, friends and saves on both.
+   New players get a file happydungeons_identity.json: KEEP A COPY. It is your player's key; with it you get your
+   login again (or a new password) on any PC.
+
+2b. PUT IT IN ITS OWN SHADPS4 USER
+   shadPS4 has ONE shadNet login per user (Settings > Manage Users > ShadNet...), used for EVERY game; Happy
+   Dungeons' own settings (step 3) only change the server. So give Happy Dungeons a user of its own, and your
+   normal user keeps your normal login for your other games:
+     - Settings > Manage Users > Create User (e.g. "HappyDungeons"). Pick that user, click ShadNet..., tick
+       "Enable ShadNet for this user" and enter the Account ID (NPID) and Password from step 2.
+     - Before you play Happy Dungeons: pick that user and click Set Default User (the default user is player 1).
+       For your other games, set your normal user as default again.
+   Don't use shadNet for anything else? Then you can put the login in your normal user instead.
+   Or use a separate, portable shadPS4 just for Happy Dungeons: a second shadPS4 folder with a "user" folder next
+   to shadPS4 has its own settings, patches and login (start it from that folder).
+
+3. HAPPY DUNGEONS' OWN SETTINGS (your other games keep theirs)
+   Right-click Happy Dungeons > Game-specific Settings... > Create Game-specific Settings from Global Settings.
+   Then Game-specific Settings... > Configure Game-specific Settings:
+     Network tab       Server          __SHADNET__
+                       WebAPI Server   __WEBAPI__
+                       tick Set Network Connected Status as True, Enable shadNet and Enable UPNP
+     Experimental tab  Vblank Frequency = twice the frame rate you want:
+                       60 = 30 fps, 120 = 60 fps, 240 = 120 fps, 480 = 240 fps
+   The game runs at normal speed at any frame rate.
+   Don't write custom_configs/CUSA09120.json by hand with only a few settings in it: shadPS4 needs a full copy of
+   the settings there (the launcher and the script make one).
+
+   SHORTCUT for steps 2b and 3, with shadPS4 and its launcher closed (after step 2's command):
+     python3 happydungeons_account.py new "Your Name" --shadps4 --fps 60
+   (or "pc ..." / "key ..." instead of "new ..."). It writes the login into a shadPS4 user that has no other
+   shadNet login (or --user NAME, e.g. the user you created for Happy Dungeons) and makes the game-specific
+   settings from your global ones. The old files are kept as *.before-happydungeons.
+
+4. PLAY
+   Start Happy Dungeons. The first start compiles shaders and is slow; later starts are quick.
+
+
+CO-OP
+  * Players on different frame rates (30 to 240 fps) can play together. Online, everyone's game runs on a shared
+    60-steps-per-second clock: a faster PC shows 60 fps during co-op, and a 30 fps PC runs two steps per frame.
+    Solo play uses your full frame rate.
+  * Co-op connects players' PCs directly, on UDP port 3658 (Network tab > P2P Port). UPnP opens it on most routers;
+    otherwise forward that UDP port on your router to your PC. Allow shadPS4 through your firewall.
+  * Two or more players behind the SAME router: give each PC its own P2P Port (e.g. 3659) and forward each one.
+    The router must also support "NAT loopback"/"hairpinning"; many do, some don't.
+  * Everyone must use this same patch pack and server: matchmaking only pairs players whose event data matches.
+
+Don't play the same character on PC and PS4 at the same time: both save to the same place, and the last one wins.
+
+
+TROUBLESHOOTING
+  * Not signed in, or a network error: check the login (step 2) and Server / WebAPI Server (step 3). The log
+    should say "Game-specific config used: true" when Happy Dungeons starts, and the default user must be the one
+    holding your Happy Dungeons login (step 2b).
+  * Patches missing in Cheats / Patches: the HappyDungeons folder must be directly inside "patches", with
+    files.json in it.
+  * Lost your login: get it again with your key file (step 2, "key"; a password you picked: pick a new one).
+  * Logs for a bug report: the shadPS4 folder > log > shad_log.txt.
+
+
+FILES
+  HappyDungeons/HappyDungeons.xml          the game talks to the friends server instead of Toylogic's old servers;
+                                           an empty cloud save slot means "no save yet" (not "corrupt"); the NAT
+                                           check counts as done; the game's network wait checks its socket
+                                           (otherwise co-op never sends anything)
+  HappyDungeons/HappyDungeons_fps.xml      game speed follows real time at any frame rate, the 30 fps cap is
+                                           lifted, and online co-op runs on the shared 60 Hz clock
+__SAVES__  happydungeons_account.py               gets your login (step 2); Python 3.6 or newer, no extra modules

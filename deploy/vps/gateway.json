@@ -1,0 +1,17 @@
+{
+ "shadnetListen": "0.0.0.0:31313",
+ "shadnetUpstream": "127.0.0.1:31413",
+ "shadnetAdmin": "http://127.0.0.1:31350",
+ "shadnetAdminNpid": "HDGateway",
+ "shadnetAdminPassword": "__ADMIN_PASSWORD__",
+ "shadnetRegistrationKey": "__REGISTRATION_KEY__",
+ "httpListen": "127.0.0.1:5101",
+ "publicBase": "http://107.170.39.185",
+ "playerShadnet": "107.170.39.185:31313",
+ "playerWebApi": "http://107.170.39.185:31315",
+ "dungeonsApi": "http://127.0.0.1:5000",
+ "baseServerData": "/opt/happydungeons/ps4/base_serverdata",
+ "overrides": {"Pic_Top01.jpg": "/opt/happydungeons/ps4/overrides/Pic_Top01.jpg"},
+ "stateDir": "/opt/happydungeons/ps4/state",
+ "comId": "NPWR12946_00"
+}
