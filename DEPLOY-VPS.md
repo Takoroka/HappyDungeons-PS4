@@ -295,3 +295,9 @@ Two copies of the Windows package (throwaway players PSLiveTestA / PSLiveTestB, 
 - shadPS4 reported a local address from a secondary network adapter without a gateway (not the LAN adapter); PCs
   with several adapters (VPN tools) may advertise the wrong local address.
 - New players start in the tutorial dungeon (Lily, 3 floors) before Game Home; co-op needs it finished.
+- Players behind the SAME router (or two clients on one PC) can't be fixed on the server: shadNet ignores the
+  local_ip in the STUN ping and hands out public addresses, and shadPS4 itself replaces a peer's address with the
+  peer's reported public address on the first packet (signaling_handler.cpp: transport.addr = pkt.mapped_addr), so
+  even LAN addresses from the server would be overridden. It needs NAT loopback (hairpin) on the router, or a change
+  in shadPS4/shadNet. Checked on this PC's router with a two-socket UDP test through the STUN port: no hairpin; the
+  NAT keeps port numbers (3670 -> 3670), which helps hole punching between homes.
